@@ -40,11 +40,11 @@ private struct ExampleScoreView: View {
 
         Divider()
 
-        ScrollView {
-          NativeScorePreview(score: score, preferredSystemCount: 2)
-            .frame(minHeight: 720)
-            .padding(.vertical, 24)
-        }
+        ScrollableNativeScorePreview(
+          score: score,
+          preferredSystemCount: 2
+        )
+        .padding(24)
         .background(Color.white)
       }
       .navigationTitle("AthenaNotation")
