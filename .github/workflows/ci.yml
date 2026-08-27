@@ -1,0 +1,26 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  swift:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode_16.2.app
+      - name: Test
+        run: swift test
+      - name: Build example
+        run: swift build --product AthenaNotationExample
+
+  cocoapods:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install CocoaPods
+        run: gem install cocoapods --no-document
+      - name: Lint Podspec
+        run: pod lib lint AthenaNotation.podspec --allow-warnings

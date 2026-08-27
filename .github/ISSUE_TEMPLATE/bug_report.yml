@@ -1,0 +1,26 @@
+name: Bug report
+description: Report a notation, import, layout, rendering, or analysis problem.
+title: "[Bug] "
+labels: ["bug"]
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: What happened and what did you expect?
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction
+      description: Include minimal Swift code or a small legal-to-share score.
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      placeholder: AthenaNotation version, Xcode, OS
+    validations:
+      required: true
