@@ -4,11 +4,11 @@
 
 [![CI](https://github.com/cubehead/AthenaNotation/actions/workflows/ci.yml/badge.svg)](https://github.com/cubehead/AthenaNotation/actions/workflows/ci.yml)
 [![Swift 6.0](https://img.shields.io/badge/Swift-6.0-F05138?logo=swift&logoColor=white)](https://www.swift.org/)
-[![Platforms](https://img.shields.io/badge/platforms-iPadOS%2017%2B%20%7C%20macOS%2015%2B-lightgrey)](Package.swift)
+[![Platforms](https://img.shields.io/badge/platforms-iPadOS%20%7C%20macOS%20%7C%20Android-lightgrey)](Package.swift)
 [![CocoaPods](https://img.shields.io/badge/CocoaPods-GitHub%20source-EE3322?logo=cocoapods&logoColor=white)](AthenaNotation.podspec)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-A native Swift music-notation engine for iPadOS and macOS.
+A native Swift music-notation engine for iPadOS, macOS, and Android.
 
 AthenaNotation provides a semantic score model, engraving layout, SwiftUI
 renderer, MusicXML and MIDI importers, and score-timeline analysis—without a
@@ -23,7 +23,8 @@ WebView, JavaScript renderer, or third-party MIDI runtime.
 - Notes, rests, dots, beams, tuplets, ties, slurs, and ledger lines
 - Accidentals, fingerings, dynamics, hairpins, pedal markings, repeats, voltas,
   and final barlines
-- Native SwiftUI and Canvas rendering with the Bravura SMuFL font
+- Native SwiftUI/Canvas rendering on Apple platforms
+- Swift-owned engraving display lists and a Jetpack Compose Canvas adapter on Android
 - MusicXML `score-partwise` import
 - Standard MIDI File Type 0 and Type 1 import
 - Tempo changes, count-in, expression, pedal, and playback-timeline analysis
@@ -47,6 +48,7 @@ other way around. See [Architecture](Documentation/Architecture.md).
 - Swift 6.0 or later
 - iOS / iPadOS 17 or later
 - macOS 15 or later
+- Swift 6.3, the Swift SDK for Android, and Android NDK r27d or later for Android builds
 
 ## Installation
 
@@ -79,6 +81,7 @@ You can also select an individual product:
 
 - `AthenaNotationCore`
 - `AthenaNotationRenderApple`
+- `AthenaNotationRenderAndroid`
 - `AthenaMusicXML`
 - `AthenaMIDI`
 - `AthenaScoreAnalysis`
@@ -119,6 +122,26 @@ pod 'AthenaNotation', :path => '../AthenaNotation'
 
 Swift Package Manager exposes the focused modules listed above. CocoaPods
 compiles the open-source core as one `AthenaNotation` module.
+
+### Android / Jetpack Compose
+
+Build the focused `AthenaNotationRenderAndroid` Swift product with the official
+Swift SDK for Android, expose `AndroidRenderBridge` through `swift-java`, and
+render its JSON display list with the included Compose adapter:
+
+```swift
+let sceneJSON = try AndroidRenderBridge().renderScoreJSON(
+  scoreJSON,
+  width: 1024,
+  height: 720,
+  preferredSystemCount: 2,
+  playbackEventIDs: ["current-event-id"]
+)
+```
+
+The renderer owns notation geometry in Swift. Kotlin only executes drawing
+commands with native Compose Canvas, so there is no WebView or JavaScript
+runtime. See [Android Compose integration](Integrations/AndroidCompose/README.md).
 
 ## Quick Start
 
@@ -176,6 +199,7 @@ and imports MusicXML, `.mid`, and `.midi` files.
 | `AthenaNotationCore` | Score semantics and exact musical time |
 | `AthenaNotationLayout` | Engraving, spacing, collision, and system planning |
 | `AthenaNotationRenderApple` | Native SwiftUI renderer and Bravura resources |
+| `AthenaNotationRenderAndroid` | Android display-list renderer, JSON bridge, and Bravura resources |
 | `AthenaScoreAnalysis` | Tempo, expression, pedal, and playback timelines |
 | `AthenaMusicXML` | MusicXML importer |
 | `AthenaMIDI` | Standard MIDI File importer |
@@ -186,6 +210,7 @@ and imports MusicXML, `.mid`, and `.midi` files.
 git clone https://github.com/cubehead/AthenaNotation.git
 cd AthenaNotation
 swift test
+swift build --target AthenaNotationRenderAndroid
 swift build --product AthenaNotationExample
 pod lib lint AthenaNotation.podspec --allow-warnings
 ```
@@ -197,6 +222,7 @@ MusicXML, MIDI, and analysis timelines.
 
 - [x] Native semantic score model
 - [x] Native SwiftUI grand-staff renderer
+- [x] Android render display list and Jetpack Compose Canvas adapter
 - [x] MusicXML and MIDI file import
 - [x] Swift Package Manager and CocoaPods distribution
 - [ ] Expand MusicXML notation coverage

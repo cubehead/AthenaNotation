@@ -6,7 +6,8 @@ without UI or importers.
 ```text
 AthenaNotationCore
 ├── AthenaNotationLayout
-│   └── AthenaNotationRenderApple
+│   ├── AthenaNotationRenderApple
+│   └── AthenaNotationRenderAndroid
 ├── AthenaScoreAnalysis
 ├── AthenaMusicXML
 └── AthenaMIDI
@@ -29,6 +30,15 @@ spanners and voltas. Layout depends only on the semantic model.
 Renders the layout with SwiftUI Canvas, CoreText and the bundled Bravura SMuFL
 font. Highlighted event IDs are input state; playback engines remain outside
 this package.
+
+## AthenaNotationRenderAndroid
+
+Converts the same semantic score and layout planner output into a Codable,
+platform-neutral display list. `AndroidRenderBridge` exposes a string-only JSON
+boundary suitable for `swift-java`/JNI. The Jetpack Compose adapter executes
+lines, paths, polygons, text and Bravura glyph commands with Android's native
+Canvas. It does not import SwiftUI, CoreText, UIKit, or Android APIs, which keeps
+the Swift product independently cross-compilable.
 
 ## AthenaScoreAnalysis
 

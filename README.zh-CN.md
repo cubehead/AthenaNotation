@@ -4,11 +4,11 @@
 
 [![CI](https://github.com/cubehead/AthenaNotation/actions/workflows/ci.yml/badge.svg)](https://github.com/cubehead/AthenaNotation/actions/workflows/ci.yml)
 [![Swift 6.0](https://img.shields.io/badge/Swift-6.0-F05138?logo=swift&logoColor=white)](https://www.swift.org/)
-[![支持平台](https://img.shields.io/badge/platforms-iPadOS%2017%2B%20%7C%20macOS%2015%2B-lightgrey)](Package.swift)
+[![支持平台](https://img.shields.io/badge/platforms-iPadOS%20%7C%20macOS%20%7C%20Android-lightgrey)](Package.swift)
 [![CocoaPods](https://img.shields.io/badge/CocoaPods-GitHub%20source-EE3322?logo=cocoapods&logoColor=white)](AthenaNotation.podspec)
 [![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-面向 iPadOS 和 macOS 的原生 Swift 乐谱引擎。
+面向 iPadOS、macOS 和 Android 的原生 Swift 乐谱引擎。
 
 AthenaNotation 提供乐谱语义模型、排版、SwiftUI 渲染、MusicXML/MIDI
 导入和乐谱时间线分析，不依赖 WebView、JavaScript 渲染器或第三方 MIDI
@@ -22,7 +22,8 @@ AthenaNotation 提供乐谱语义模型、排版、SwiftUI 渲染、MusicXML/MID
 - 精确有理数时间、多声部和钢琴高低音双谱表
 - 音符、休止、附点、连桁、Tuplet、延音线、连音线和加线
 - 升降号、指法、力度、渐强渐弱、踏板、重复、Volta 和终止线
-- 基于 SwiftUI、Canvas 和 Bravura SMuFL 字体的原生渲染
+- Apple 端基于 SwiftUI、Canvas 和 Bravura SMuFL 字体的原生渲染
+- Android 端由 Swift 生成雕版绘制列表，Jetpack Compose Canvas 原生执行
 - MusicXML `score-partwise` 导入
 - Standard MIDI File Type 0 和 Type 1 导入
 - 速度变化、倒计时、表情、踏板和播放时间线分析
@@ -46,6 +47,7 @@ AthenaNotation 是开源的乐谱核心，明确不包含：
 - Swift 6.0+
 - iOS / iPadOS 17+
 - macOS 15+
+- Android 构建需要 Swift 6.3、Swift SDK for Android 和 Android NDK r27d+
 
 ## 安装
 
@@ -78,6 +80,7 @@ dependencies: [
 
 - `AthenaNotationCore`
 - `AthenaNotationRenderApple`
+- `AthenaNotationRenderAndroid`
 - `AthenaMusicXML`
 - `AthenaMIDI`
 - `AthenaScoreAnalysis`
@@ -116,6 +119,26 @@ pod 'AthenaNotation', :path => '../AthenaNotation'
 
 Swift Package Manager 会保留上面的细粒度模块；CocoaPods 则会把全部开源核心
 编译为一个 `AthenaNotation` 模块。
+
+### Android / Jetpack Compose
+
+使用官方 Swift SDK for Android 交叉编译 `AthenaNotationRenderAndroid`，通过
+`swift-java` 暴露 `AndroidRenderBridge`，再用仓库提供的 Compose 适配器执行
+JSON 绘制列表：
+
+```swift
+let sceneJSON = try AndroidRenderBridge().renderScoreJSON(
+  scoreJSON,
+  width: 1024,
+  height: 720,
+  preferredSystemCount: 2,
+  playbackEventIDs: ["current-event-id"]
+)
+```
+
+乐谱几何计算仍由 Swift 统一负责，Kotlin 只通过原生 Compose Canvas 执行绘制，
+不使用 WebView 或 JavaScript。详见
+[Android Compose 接入说明](Integrations/AndroidCompose/README.md)。
 
 ## 快速开始
 
@@ -173,6 +196,7 @@ MusicXML、`.mid` 和 `.midi` 文件。
 | `AthenaNotationCore` | 乐谱语义和精确音乐时间 |
 | `AthenaNotationLayout` | 雕版、间距、碰撞和系统排版 |
 | `AthenaNotationRenderApple` | 原生 SwiftUI 渲染和 Bravura 资源 |
+| `AthenaNotationRenderAndroid` | Android 绘制列表、JSON 桥接和 Bravura 资源 |
 | `AthenaScoreAnalysis` | 速度、表情、踏板和播放时间线 |
 | `AthenaMusicXML` | MusicXML 导入 |
 | `AthenaMIDI` | Standard MIDI File 导入 |
@@ -183,6 +207,7 @@ MusicXML、`.mid` 和 `.midi` 文件。
 git clone https://github.com/cubehead/AthenaNotation.git
 cd AthenaNotation
 swift test
+swift build --target AthenaNotationRenderAndroid
 swift build --product AthenaNotationExample
 pod lib lint AthenaNotation.podspec --allow-warnings
 ```
@@ -193,6 +218,7 @@ pod lib lint AthenaNotation.podspec --allow-warnings
 
 - [x] 原生乐谱语义模型
 - [x] 原生 SwiftUI 钢琴双谱表渲染
+- [x] Android 绘制列表和 Jetpack Compose Canvas 适配器
 - [x] MusicXML 和 MIDI 文件导入
 - [x] Swift Package Manager 和 CocoaPods 发布配置
 - [ ] 扩展 MusicXML 符号覆盖范围

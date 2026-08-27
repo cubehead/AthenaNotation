@@ -13,6 +13,8 @@ jobs:
         run: sudo xcode-select -s /Applications/Xcode_16.2.app
       - name: Test
         run: swift test
+      - name: Build Android renderer product
+        run: swift build --target AthenaNotationRenderAndroid
       - name: Build example
         run: swift build --product AthenaNotationExample
 

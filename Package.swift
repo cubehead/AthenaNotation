@@ -22,6 +22,7 @@ let package = Package(
     ),
     .library(name: "AthenaNotationCore", targets: ["AthenaNotationCore"]),
     .library(name: "AthenaNotationRenderApple", targets: ["AthenaNotationRenderApple"]),
+    .library(name: "AthenaNotationRenderAndroid", targets: ["AthenaNotationRenderAndroid"]),
     .library(name: "AthenaMusicXML", targets: ["AthenaMusicXML"]),
     .library(name: "AthenaMIDI", targets: ["AthenaMIDI"]),
     .library(name: "AthenaScoreAnalysis", targets: ["AthenaScoreAnalysis"]),
@@ -35,6 +36,14 @@ let package = Package(
     ),
     .target(
       name: "AthenaNotationRenderApple",
+      dependencies: [
+        "AthenaNotationCore",
+        "AthenaNotationLayout",
+      ],
+      resources: [.process("Resources")]
+    ),
+    .target(
+      name: "AthenaNotationRenderAndroid",
       dependencies: [
         "AthenaNotationCore",
         "AthenaNotationLayout",
@@ -70,6 +79,13 @@ let package = Package(
         "AthenaNotationCore",
         "AthenaNotationLayout",
         "AthenaNotationRenderApple",
+      ]
+    ),
+    .testTarget(
+      name: "AthenaNotationRenderAndroidTests",
+      dependencies: [
+        "AthenaNotationCore",
+        "AthenaNotationRenderAndroid",
       ]
     ),
     .testTarget(
