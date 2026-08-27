@@ -4,6 +4,26 @@
 #endif
 import Foundation
 
+private enum AndroidEngravingMetrics {
+  static let stemWidth = 1.4
+  static let filledNoteheadWidth = 11.8
+  static let wholeNoteheadWidth = 16.88
+
+  static func noteheadWidth(for glyph: AndroidSMuFLGlyph) -> Double {
+    glyph == .noteheadWhole ? wholeNoteheadWidth : filledNoteheadWidth
+  }
+
+  static func flagBounds(for glyph: AndroidSMuFLGlyph) -> (width: Double, height: Double)? {
+    switch glyph {
+    case .flag8thUp: (10.56, 32.88)
+    case .flag8thDown: (12.24, 32.88)
+    case .flag16thUp: (11.16, 32.60)
+    case .flag16thDown: (11.88, 32.88)
+    default: nil
+    }
+  }
+}
+
 /// String-only facade intended for swift-java/JNI bindings. Keeping the wire
 /// boundary as UTF-8 JSON avoids exposing Swift value-layout details to Kotlin.
 public struct AndroidRenderBridge: Sendable {
@@ -335,14 +355,20 @@ public struct AndroidScoreRenderer: Sendable {
       stemUp: stemUp,
       accidentalPitchIndices: accidentalIndices
     )
-    let noteheadWidth = 13.5
-    let noteAdvance = ChordPlanner().horizontalAdvance(noteheadWidth: noteheadWidth, stemWidth: 1.4)
+    let stemWidth = AndroidEngravingMetrics.stemWidth
+    let noteheadWidth = AndroidEngravingMetrics.noteheadWidth(for: head)
+    let noteAdvance = ChordPlanner().horizontalAdvance(
+      noteheadWidth: noteheadWidth,
+      stemWidth: stemWidth
+    )
     let noteXs = placements.map { x + Double($0.noteheadColumn) * noteAdvance }
     var result: [AndroidRenderCommand] = []
 
     var stemEnd: Double?
     if event.engravingDuration < .one, let low = ys.max(), let high = ys.min() {
-      let stemX = x + (stemUp ? noteheadWidth / 2 - 0.7 : -noteheadWidth / 2 + 0.7)
+      let stemX = x + (stemUp
+        ? noteheadWidth / 2 - stemWidth / 2
+        : -noteheadWidth / 2 + stemWidth / 2)
       let start = stemUp ? low : high
       let fallback = (stemUp ? high : low)
         + (stemUp ? -options.lineSpacing * 3.5 : options.lineSpacing * 3.5)
@@ -350,12 +376,18 @@ public struct AndroidScoreRenderer: Sendable {
       stemEnd = end
       result.append(line(
         role: "stem", eventID: event.id.rawValue,
-        x1: stemX, y1: start, x2: stemX, y2: end, lineWidth: 1.4
+        x1: stemX, y1: start, x2: stemX, y2: end, lineWidth: stemWidth
       ))
-      if beamStem == nil, let flag = flagGlyph(event.engravingDuration, stemUp: stemUp) {
+      if beamStem == nil,
+        let flag = flagGlyph(event.engravingDuration, stemUp: stemUp),
+        let flagBounds = AndroidEngravingMetrics.flagBounds(for: flag)
+      {
         result.append(glyph(
           role: "flag", eventID: event.id.rawValue,
-          value: flag, x: stemX + (stemUp ? 5 : -5), y: end, size: 40
+          value: flag,
+          x: stemX - stemWidth / 2 + flagBounds.width / 2,
+          y: stemUp ? end + flagBounds.height / 2 : end - flagBounds.height / 2,
+          size: 40
         ))
       }
     }
@@ -485,6 +517,8 @@ public struct AndroidScoreRenderer: Sendable {
     notationStart: Double,
     stemDirections: [String: Bool]
   ) -> BeamLayout {
+    let stemWidth = AndroidEngravingMetrics.stemWidth
+    let noteheadHalfWidth = AndroidEngravingMetrics.filledNoteheadWidth / 2
     let positioned = Dictionary(uniqueKeysWithValues: layout.events.map { ($0.input.event.id, $0) })
     var stems: [NotationEventID: BeamStem] = [:]
     var commands: [AndroidRenderCommand] = []
@@ -512,7 +546,11 @@ public struct AndroidScoreRenderer: Sendable {
       }
       let isUp = stemDirections[group.voiceID]
         ?? (nodes.map(\.averagePosition).reduce(0, +) / Double(nodes.count) < 4)
-      let stemXs = nodes.map { $0.x + (isUp ? 6.05 : -6.05) }
+      let stemXs = nodes.map {
+        $0.x + (isUp
+          ? noteheadHalfWidth - stemWidth / 2
+          : -noteheadHalfWidth + stemWidth / 2)
+      }
       let references = nodes.map { isUp ? $0.topY : $0.bottomY }
       let dx = max((stemXs.last ?? first.x) - (stemXs.first ?? last.x), 1)
       let slopeRise = min(max((references.last! - references.first!) * 0.25, -options.lineSpacing), options.lineSpacing)
@@ -522,7 +560,11 @@ public struct AndroidScoreRenderer: Sendable {
         ? zip(references, stemXs).map { $0 - options.lineSpacing * 3.5 - slope * ($1 - firstX) }.min()!
         : zip(references, stemXs).map { $0 + options.lineSpacing * 3.5 - slope * ($1 - firstX) }.max()!
       for (node, stemX) in zip(nodes, stemXs) {
-        stems[node.id] = BeamStem(isUp: isUp, endY: outerY + slope * (stemX - firstX))
+        let beamEdgeY = outerY + slope * (stemX - firstX)
+        stems[node.id] = BeamStem(
+          isUp: isUp,
+          endY: beamEdgeY + (isUp ? stemWidth / 2 : -stemWidth / 2)
+        )
       }
       for level in 0..<(group.eventBeamCounts.max() ?? 0) {
         let indices = group.eventBeamCounts.indices.filter { group.eventBeamCounts[$0] > level }

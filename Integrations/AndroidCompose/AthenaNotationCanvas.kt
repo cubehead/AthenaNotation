@@ -3,6 +3,7 @@ package io.github.cubehead.athenanotation.compose
 import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Path
+import android.graphics.Rect
 import android.graphics.Typeface
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -98,7 +99,7 @@ private fun NotationSceneCanvas(
                 color = Color.parseColor(command.color)
                 style = if (command.fill) Paint.Style.FILL else Paint.Style.STROKE
                 strokeWidth = command.lineWidth
-                strokeCap = Paint.Cap.ROUND
+                strokeCap = if (command.role == "stem") Paint.Cap.BUTT else Paint.Cap.ROUND
                 strokeJoin = Paint.Join.ROUND
             }
             when (command.kind) {
@@ -133,8 +134,14 @@ private fun NotationSceneCanvas(
                     paint.textSize = command.fontSize
                     paint.textAlign = Paint.Align.CENTER
                     if (command.kind == "glyph") paint.typeface = bravuraTypeface
-                    val metrics = paint.fontMetrics
-                    val baseline = command.y - (metrics.ascent + metrics.descent) / 2f
+                    val baseline = if (command.kind == "glyph") {
+                        val inkBounds = Rect()
+                        paint.getTextBounds(value, 0, value.length, inkBounds)
+                        command.y - inkBounds.exactCenterY()
+                    } else {
+                        val metrics = paint.fontMetrics
+                        command.y - (metrics.ascent + metrics.descent) / 2f
+                    }
                     canvas.drawText(value, command.x, baseline, paint)
                 }
             }
@@ -149,6 +156,7 @@ private data class PathElement(val verb: String, val points: List<Point>)
 
 private data class DrawCommand(
     val kind: String,
+    val role: String,
     val color: String,
     val fill: Boolean,
     val lineWidth: Float,
@@ -192,6 +200,7 @@ private data class NotationScene(
                 commands = root.getJSONArray("commands").objects().map { command ->
                     DrawCommand(
                         kind = command.getString("kind"),
+                        role = command.getString("role"),
                         color = command.getString("color"),
                         fill = command.getBoolean("fill"),
                         lineWidth = command.getDouble("lineWidth").toFloat(),

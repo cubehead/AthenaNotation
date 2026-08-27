@@ -80,6 +80,52 @@ import Testing
   #expect(scene.commands.contains { $0.role == "hairpin" })
 }
 
+@Test func stemsUseBravuraNoteheadEdgesAndFlagsUseStemAnchors() throws {
+  let upwardID = NotationEventID(rawValue: "upward")
+  let downwardID = NotationEventID(rawValue: "downward")
+  let score = NotationScore(
+    staves: [NotationStaff(id: "treble", clef: .treble)],
+    voices: [NotationVoice(id: "right", events: [
+      NotationEvent(
+        id: upwardID,
+        content: .notes([pitch(60, .c, 4)]),
+        duration: Rational(1, 8),
+        staffID: "treble"
+      ),
+      NotationEvent(
+        id: downwardID,
+        content: .notes([pitch(84, .c, 6)]),
+        duration: Rational(1, 4),
+        staffID: "treble"
+      ),
+    ])]
+  )
+  let scene = AndroidScoreRenderer(options: .init(width: 600, height: 260))
+    .render(score: score)
+
+  let upwardHead = try #require(scene.commands.first {
+    $0.role == "notehead" && $0.eventID == upwardID.rawValue
+  })
+  let upwardStem = try #require(scene.commands.first {
+    $0.role == "stem" && $0.eventID == upwardID.rawValue
+  })
+  let upwardFlag = try #require(scene.commands.first {
+    $0.role == "flag" && $0.eventID == upwardID.rawValue
+  })
+  let upwardStemX = try #require(upwardStem.points.first?.x)
+  #expect(abs(upwardStemX - ((upwardHead.x ?? 0) + 5.2)) < 0.001)
+  #expect((upwardFlag.x ?? 0) > upwardStemX)
+
+  let downwardHead = try #require(scene.commands.first {
+    $0.role == "notehead" && $0.eventID == downwardID.rawValue
+  })
+  let downwardStem = try #require(scene.commands.first {
+    $0.role == "stem" && $0.eventID == downwardID.rawValue
+  })
+  let downwardStemX = try #require(downwardStem.points.first?.x)
+  #expect(abs(downwardStemX - ((downwardHead.x ?? 0) - 5.2)) < 0.001)
+}
+
 private func pitch(_ midi: UInt8, _ step: DiatonicStep, _ octave: Int) -> NotatedPitch {
   NotatedPitch(midi: MIDIPitch(rawValue: midi), step: step, octave: octave)
 }
