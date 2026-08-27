@@ -161,13 +161,17 @@ let imported = try MusicXMLImporter().parse(data: musicXMLData)
 
 struct ScoreView: View {
   var body: some View {
-    NativeScorePreview(
+    ScrollableNativeScorePreview(
       score: imported.score,
       preferredSystemCount: 2
     )
   }
 }
 ```
+
+`ScrollableNativeScorePreview` 会为每一行谱表保留可读的最小高度；当显示区域
+小于乐谱画布时，它会改为纵向滚动。只有当外层视图已经负责管理乐谱画布尺寸时，
+才需要直接使用 `NativeScorePreview`。
 
 ### 导入 MIDI 文件
 

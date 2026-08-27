@@ -167,13 +167,18 @@ let imported = try MusicXMLImporter().parse(data: musicXMLData)
 
 struct ScoreView: View {
   var body: some View {
-    NativeScorePreview(
+    ScrollableNativeScorePreview(
       score: imported.score,
       preferredSystemCount: 2
     )
   }
 }
 ```
+
+`ScrollableNativeScorePreview` preserves a readable minimum height for every
+system and scrolls vertically when its viewport is shorter than the score.
+Use `NativeScorePreview` directly only when the containing view already owns
+the notation canvas size.
 
 ### Import a MIDI file
 
