@@ -26,7 +26,9 @@ fallback behavior for symbols they do not render yet.
 ## Automated baseline
 
 [`API/PublicAPI.txt`](../API/PublicAPI.txt) is generated from Swift Symbol Graph
-output. CI runs:
+output. Compiler-private identifiers are normalized to public symbol paths, and
+toolchain-only synthesized metadata is excluded, so the baseline remains stable
+across supported Swift 6.x toolchains. CI runs:
 
 ```sh
 Tools/check-api-baseline.sh

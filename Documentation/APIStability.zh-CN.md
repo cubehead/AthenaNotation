@@ -21,7 +21,9 @@ raw-value 乐谱类型，客户端应为暂未识别的符号保留降级行为�
 
 ## 自动化基线
 
-[`API/PublicAPI.txt`](../API/PublicAPI.txt) 由 Swift Symbol Graph 生成。CI 执行：
+[`API/PublicAPI.txt`](../API/PublicAPI.txt) 由 Swift Symbol Graph 生成。脚本会把
+编译器内部标识转换为公开符号路径，并排除只与工具链有关的合成元数据，使基线可在
+受支持的 Swift 6.x 工具链间保持稳定。CI 执行：
 
 ```sh
 Tools/check-api-baseline.sh

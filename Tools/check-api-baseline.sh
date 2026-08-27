@@ -29,7 +29,6 @@ for module in $modules; do
     | [
         $module,
         "symbol",
-        .identifier.precise,
         .kind.identifier,
         (.pathComponents | join(".")),
         ((.declarationFragments // []) | map(.spelling) | join(""))
@@ -37,9 +36,20 @@ for module in $modules; do
     | @tsv
   ' "$graph"
   jq -r --arg module "$module" '
+    . as $graph
+    | ($graph.symbols
+        | map({key: .identifier.precise, value: (.pathComponents | join("."))})
+        | from_entries) as $names
+    |
     .relationships[]
     | select(.kind == "conformsTo" or .kind == "inheritsFrom" or .kind == "requirementOf")
-    | [$module, "relationship", .kind, .source, .target]
+    | ($names[.source] // empty) as $source
+    | ($names[.target] // .targetFallback // empty) as $target
+    | select($source != "" and $target != "")
+    # Swift 6.3 began emitting this implicit metatype conformance for every
+    # Sendable type. It is compiler metadata, not source API.
+    | select($target != "Swift.SendableMetatype")
+    | [$module, "relationship", .kind, $source, $target]
     | @tsv
   ' "$graph"
 done | LC_ALL=C sort > "$temporary"
