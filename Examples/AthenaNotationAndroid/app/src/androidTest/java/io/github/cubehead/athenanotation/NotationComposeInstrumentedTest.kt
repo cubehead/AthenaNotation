@@ -6,6 +6,8 @@ import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.graphics.toPixelMap
 import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.assertCountEquals
+import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
@@ -24,6 +26,11 @@ class NotationComposeInstrumentedTest {
     @Test
     fun composeCanvasDrawsNotationAndExportsScreenshot() {
         compose.onNodeWithTag("swift-status").assertExists()
+        compose.onAllNodesWithContentDescription(
+            "Measure 1, beat 1",
+            substring = true,
+            useUnmergedTree = true,
+        ).assertCountEquals(2)
         val image = compose.onNodeWithTag("notation-canvas").captureToImage()
         val pixels = image.toPixelMap()
         var darkPixels = 0

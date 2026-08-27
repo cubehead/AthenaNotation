@@ -126,4 +126,48 @@ final class MusicXMLImporterTests: XCTestCase {
     XCTAssertEqual(result.score.tempoChanges[1].onset, .one)
     XCTAssertEqual(result.score.tempoChanges[1].beatsPerMinute, 72)
   }
+
+  func testCommonDirectionsSymbolsLyricsAndRangesRemainSemantic() throws {
+    let xml = """
+      <score-partwise version="4.0">
+        <part-list><score-part id="P1"><part-name>Piano</part-name></score-part></part-list>
+        <part id="P1"><measure number="1">
+          <attributes><divisions>4</divisions><time><beats>4</beats><beat-type>4</beat-type></time></attributes>
+          <direction placement="below"><direction-type><dynamics><mf/></dynamics><wedge number="1" type="crescendo"/></direction-type><sound dynamics="70"/><staff>1</staff></direction>
+          <direction placement="above"><direction-type><octave-shift number="1" type="down" size="8"/></direction-type><staff>1</staff></direction>
+          <note><pitch><step>C</step><octave>4</octave></pitch><duration>4</duration><voice>1</voice><type>quarter</type><staff>1</staff>
+            <notations><articulations><staccato placement="above"/></articulations><ornaments><trill-mark/></ornaments><fermata/><arpeggiate/>
+              <technical><up-bow/></technical><glissando number="1" type="start"/></notations>
+            <lyric number="1"><syllabic>begin</syllabic><text>A</text></lyric></note>
+          <direction placement="above"><direction-type><words>dolce</words><rehearsal>A</rehearsal><pedal number="1" type="start"/></direction-type><staff>1</staff></direction>
+          <note><pitch><step>D</step><octave>4</octave></pitch><duration>4</duration><voice>1</voice><type>quarter</type><staff>1</staff>
+            <notations><glissando number="1" type="stop"/></notations></note>
+          <direction placement="below"><direction-type><wedge number="1" type="stop"/></direction-type><staff>1</staff></direction>
+          <note><pitch><step>E</step><octave>4</octave></pitch><duration>4</duration><voice>1</voice><type>quarter</type><staff>1</staff></note>
+          <direction placement="below"><direction-type><pedal number="1" type="stop"/><octave-shift number="1" type="stop"/></direction-type><staff>1</staff></direction>
+          <note><pitch><step>F</step><octave>4</octave></pitch><duration>4</duration><voice>1</voice><type>quarter</type><staff>1</staff></note>
+        </measure></part>
+      </score-partwise>
+      """
+
+    let result = try MusicXMLImporter().parse(data: Data(xml.utf8))
+    let events = try XCTUnwrap(result.score.voices.first?.events)
+    let firstAttachments = events[0].attachments.map(\.content)
+    let secondAttachments = events[1].attachments.map(\.content)
+
+    XCTAssertTrue(firstAttachments.contains(.dynamic(label: "mf", velocity: 89)))
+    XCTAssertTrue(firstAttachments.contains(.smuflGlyph(name: "articStaccatoAbove")))
+    XCTAssertTrue(firstAttachments.contains(.smuflGlyph(name: "ornamentTrill")))
+    XCTAssertTrue(firstAttachments.contains(.smuflGlyph(name: "fermataAbove")))
+    XCTAssertTrue(firstAttachments.contains(.technique(name: "arpeggio")))
+    XCTAssertTrue(firstAttachments.contains(.technique(name: "up-bow")))
+    XCTAssertTrue(firstAttachments.contains(.text("A-")))
+    XCTAssertTrue(secondAttachments.contains(.text("dolce")))
+    XCTAssertTrue(secondAttachments.contains(.technique(name: "A")))
+    XCTAssertEqual(
+      Set(result.score.spanners.map(\.kind)),
+      Set([.crescendo, .pedal, .ottava, .glissando])
+    )
+    XCTAssertTrue(result.diagnostics.isEmpty)
+  }
 }

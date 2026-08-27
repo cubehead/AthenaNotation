@@ -30,6 +30,10 @@ class SwiftRuntimeInstrumentedTest {
         assertTrue("beam" in roles)
         assertTrue("playbackHighlight" in roles)
         assertTrue("barline" in roles)
+        val accessibility = scene.getJSONArray("accessibility")
+        assertTrue(accessibility.length() > 0)
+        assertTrue(accessibility.getJSONObject(0).getString("label").startsWith("Measure 1, beat 1"))
+        assertTrue(accessibility.getJSONObject(0).has("eventID"))
     }
 
     @Test

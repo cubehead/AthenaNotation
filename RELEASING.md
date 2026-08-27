@@ -21,10 +21,13 @@
 1. 更新 `CHANGELOG.md`。
 2. 把 `AthenaNotation.podspec` 的 `spec.version` 改为目标版本。
 3. 确认 Podspec 的 Git 地址与仓库地址一致。
-4. 运行：
+4. 公开 API 变化需符合 `Documentation/APIStability.md`，并在评审后运行
+   `Tools/check-api-baseline.sh --record`。
+5. 运行：
 
 ```sh
 swift test
+Tools/check-api-baseline.sh
 swift build --product AthenaNotationExample
 pod lib lint AthenaNotation.podspec --allow-warnings
 ```
@@ -35,9 +38,9 @@ SwiftPM 不需要上传单独的二进制包。根目录保留有效的 `Package
 将仓库推送到 GitHub，并发布完整三段式版本标签：
 
 ```sh
-git tag 0.1.0
+git tag 1.0.0
 git push origin main
-git push origin 0.1.0
+git push origin 1.0.0
 ```
 
 标签必须是 `MAJOR.MINOR.PATCH`；只有 `0.1` 不会被 SwiftPM 识别为完整版本。
@@ -48,7 +51,7 @@ git push origin 0.1.0
 ```swift
 .package(
   url: "https://github.com/cubehead/AthenaNotation.git",
-  from: "0.1.0"
+  from: "1.0.0"
 )
 ```
 
@@ -72,7 +75,7 @@ pod lib lint AthenaNotation.podspec --allow-warnings
 ```ruby
 pod 'AthenaNotation',
     :git => 'https://github.com/cubehead/AthenaNotation.git',
-    :tag => '0.1.0'
+    :tag => '1.0.0'
 ```
 
 暂不执行 `pod trunk push`，也不需要在 CocoaPods 公共 Specs 索引中创建条目。

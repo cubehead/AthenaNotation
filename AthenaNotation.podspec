@@ -1,6 +1,6 @@
 Pod::Spec.new do |spec|
   spec.name = 'AthenaNotation'
-  spec.version = '0.1.0'
+  spec.version = '1.0.0'
   spec.summary = 'Native Swift music notation, MusicXML and MIDI for Apple platforms.'
   spec.description = <<-DESC
     AthenaNotation is a dependency-free Swift notation engine with a semantic

@@ -6,12 +6,19 @@ public struct AndroidRenderScene: Hashable, Sendable, Codable {
   public let width: Double
   public let height: Double
   public let commands: [AndroidRenderCommand]
+  public let accessibility: [AndroidAccessibilityElement]
 
-  public init(width: Double, height: Double, commands: [AndroidRenderCommand]) {
+  public init(
+    width: Double,
+    height: Double,
+    commands: [AndroidRenderCommand],
+    accessibility: [AndroidAccessibilityElement] = []
+  ) {
     precondition(width > 0 && height > 0)
     self.width = width
     self.height = height
     self.commands = commands
+    self.accessibility = accessibility
   }
 
   public func jsonString(prettyPrinted: Bool = false) throws -> String {
@@ -22,6 +29,30 @@ public struct AndroidRenderScene: Hashable, Sendable, Codable {
       throw AndroidRenderSceneError.invalidUTF8
     }
     return value
+  }
+}
+
+/// Semantic score-reading metadata consumed by TalkBack and other Android clients.
+public struct AndroidAccessibilityElement: Identifiable, Hashable, Sendable, Codable {
+  public var id: String { eventID }
+  public let eventID: String
+  public let label: String
+  public let measureNumber: Int
+  public let beat: String
+  public let onset: String
+
+  public init(
+    eventID: String,
+    label: String,
+    measureNumber: Int,
+    beat: String,
+    onset: String
+  ) {
+    self.eventID = eventID
+    self.label = label
+    self.measureNumber = measureNumber
+    self.beat = beat
+    self.onset = onset
   }
 }
 
@@ -116,4 +147,3 @@ public struct AndroidRenderCommand: Hashable, Sendable, Codable {
     self.fontSize = fontSize
   }
 }
-

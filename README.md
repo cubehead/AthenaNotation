@@ -22,20 +22,22 @@ AthenaNotation provides a semantic score model, engraving layout, SwiftUI
 renderer, MusicXML and MIDI importers, and score-timeline analysis—without a
 WebView, JavaScript renderer, or third-party MIDI runtime.
 
-> **Project status:** AthenaNotation is under active development. Public APIs
-> may change before version 1.0.
+> **Project status:** AthenaNotation 1.0 has a versioned public API baseline and
+> follows Semantic Versioning. See [Public API stability](Documentation/APIStability.md).
 
 ## Features
 
 - Exact rational timing, multiple voices, and grand-staff scores
 - Notes, rests, dots, beams, tuplets, ties, slurs, and ledger lines
-- Accidentals, fingerings, dynamics, hairpins, pedal markings, repeats, voltas,
-  and final barlines
+- Accidentals, fingerings, articulations, ornaments, dynamics, hairpins, pedal
+  markings, lyrics, text directions, repeats, voltas, and final barlines
 - Native SwiftUI/Canvas rendering on Apple platforms
 - Swift-owned engraving display lists and a Jetpack Compose Canvas adapter on Android
 - MusicXML `score-partwise` import
 - Standard MIDI File Type 0 and Type 1 import
 - Tempo changes, count-in, expression, pedal, and playback-timeline analysis
+- Exact event/measure/beat navigation with localized accessibility labels
+- VoiceOver virtual score elements and TalkBack metadata
 - Focused products, so clients can depend on only the modules they need
 
 ## Scope
@@ -72,7 +74,7 @@ Or add the dependency to `Package.swift`:
 dependencies: [
   .package(
     url: "https://github.com/cubehead/AthenaNotation.git",
-    from: "0.1.0"
+    from: "1.0.0"
   )
 ]
 ```
@@ -101,7 +103,7 @@ use_frameworks!
 target 'YourApp' do
   pod 'AthenaNotation',
       :git => 'https://github.com/cubehead/AthenaNotation.git',
-      :tag => '0.1.0'
+      :tag => '1.0.0'
 end
 ```
 
@@ -155,6 +157,8 @@ highlighting on Android 9–15 ARM64 emulators. The AAR—not a JAR—is require
 because the Android package includes native Swift libraries and font resources.
 The Compose adapter follows the Android system color scheme by default and can
 be pinned or customized with `AthenaNotationColors`.
+Its JSON scene also contains localized event labels consumed by the included
+TalkBack semantics layer.
 
 ## Quick Start
 
@@ -186,6 +190,26 @@ Both Apple render views follow the SwiftUI color scheme automatically. To pin
 the notation to a specific palette, pass `theme: .light` or `theme: .dark`;
 `NativeScoreTheme` also accepts custom background, foreground, and playback
 highlight colors.
+
+See [MusicXML coverage](Documentation/MusicXMLCoverage.md) for the notation
+preserved by the 1.0 importer and its documented limitations.
+
+### Navigate and describe a score
+
+```swift
+import AthenaScoreAnalysis
+
+let navigator = ScoreNavigator(score: imported.score)
+let first = navigator.entries.first
+let next = first.flatMap { navigator.next(after: $0.id) }
+let label = first.map {
+  ScoreAccessibilityFormatter(localeIdentifier: "zh_CN").label(for: $0)
+}
+```
+
+Navigation uses exact rational onset, measure, and beat values. The Apple
+renderer exposes the same entries to VoiceOver; Android render JSON contains
+matching TalkBack metadata. See [Accessibility and navigation](Documentation/Accessibility.md).
 
 ### Import a MIDI file
 
@@ -233,13 +257,19 @@ and imports MusicXML, `.mid`, and `.midi` files.
 git clone https://github.com/cubehead/AthenaNotation.git
 cd AthenaNotation
 swift test
+Tools/check-api-baseline.sh
 swift build --target AthenaNotationRenderAndroid
 swift build --product AthenaNotationExample
 pod lib lint AthenaNotation.podspec --allow-warnings
 ```
 
-The current test suite covers score semantics, notation layout, SMuFL glyphs,
-MusicXML, MIDI, and analysis timelines.
+The current test suite covers score semantics, notation layout, committed SVG
+engraving fixtures, SMuFL glyphs, MusicXML, MIDI, accessibility, navigation,
+and analysis timelines.
+
+See [engraving visual regression](Documentation/VisualRegression.md) for the
+golden-file review workflow and [public API stability](Documentation/APIStability.md)
+for the 1.x compatibility gate.
 
 ## Roadmap
 
@@ -248,10 +278,13 @@ MusicXML, MIDI, and analysis timelines.
 - [x] Android render display list and Jetpack Compose Canvas adapter
 - [x] MusicXML and MIDI file import
 - [x] Swift Package Manager and CocoaPods distribution
-- [ ] Expand MusicXML notation coverage
-- [ ] Add visual regression fixtures for engraving
-- [ ] Improve accessibility and score-navigation APIs
-- [ ] Stabilize the public API for 1.0
+- [x] Expand MusicXML notation coverage
+- [x] Add visual regression fixtures for engraving
+- [x] Improve accessibility and score-navigation APIs
+- [x] Stabilize the public API for 1.0
+
+The 1.0 roadmap is complete. Future work is tracked through GitHub issues and
+must preserve the [1.x compatibility contract](Documentation/APIStability.md).
 
 ## Contributing
 

@@ -22,19 +22,22 @@ AthenaNotation 提供乐谱语义模型、排版、SwiftUI 渲染、MusicXML/MID
 导入和乐谱时间线分析，不依赖 WebView、JavaScript 渲染器或第三方 MIDI
 运行库。
 
-> **项目状态：** AthenaNotation 正在积极开发中；在 1.0 版本之前，公开 API
-> 仍可能调整。
+> **项目状态：** AthenaNotation 1.0 已建立版本化公开 API 基线，并遵循语义化
+> 版本。详见[公开 API 稳定性](Documentation/APIStability.zh-CN.md)。
 
 ## 功能
 
 - 精确有理数时间、多声部和钢琴高低音双谱表
 - 音符、休止、附点、连桁、Tuplet、延音线、连音线和加线
-- 升降号、指法、力度、渐强渐弱、踏板、重复、Volta 和终止线
+- 升降号、指法、奏法、装饰音、力度、渐强渐弱、踏板、歌词、文字方向、重复、
+  Volta 和终止线
 - Apple 端基于 SwiftUI、Canvas 和 Bravura SMuFL 字体的原生渲染
 - Android 端由 Swift 生成雕版绘制列表，Jetpack Compose Canvas 原生执行
 - MusicXML `score-partwise` 导入
 - Standard MIDI File Type 0 和 Type 1 导入
 - 速度变化、倒计时、表情、踏板和播放时间线分析
+- 基于精确小节与拍位的事件导航，以及中英文无障碍读谱标签
+- Apple VoiceOver 虚拟乐谱元素和 Android TalkBack 语义数据
 - 可按需选择的细粒度 Swift Package 产品
 
 ## 项目边界
@@ -69,7 +72,7 @@ https://github.com/cubehead/AthenaNotation.git
 dependencies: [
   .package(
     url: "https://github.com/cubehead/AthenaNotation.git",
-    from: "0.1.0"
+    from: "1.0.0"
   )
 ]
 ```
@@ -98,7 +101,7 @@ use_frameworks!
 target 'YourApp' do
   pod 'AthenaNotation',
       :git => 'https://github.com/cubehead/AthenaNotation.git',
-      :tag => '0.1.0'
+      :tag => '1.0.0'
 end
 ```
 
@@ -149,6 +152,7 @@ MIDI、Bravura 渲染和播放高亮。由于包内含 Swift 原生库和字体�
 发布物应使用 AAR，而不是 JAR。
 Compose 适配器默认跟随 Android 系统的浅色/暗色模式，也可通过
 `AthenaNotationColors` 固定或自定义谱面配色。
+JSON 场景同时包含本地化事件标签，仓库内的 Compose 适配器会将其暴露给 TalkBack。
 
 ## 快速开始
 
@@ -178,6 +182,26 @@ struct ScoreView: View {
 Apple 端两个渲染视图默认都会跟随 SwiftUI 的浅色/暗色环境。需要固定主题时，
 可传入 `theme: .light` 或 `theme: .dark`；也可通过 `NativeScoreTheme` 自定义背景色、
 谱面前景色和播放高亮色。
+
+1.0 导入器保留的乐谱内容与已知限制见
+[MusicXML 覆盖范围](Documentation/MusicXMLCoverage.md)。
+
+### 导航与读谱描述
+
+```swift
+import AthenaScoreAnalysis
+
+let navigator = ScoreNavigator(score: imported.score)
+let first = navigator.entries.first
+let next = first.flatMap { navigator.next(after: $0.id) }
+let label = first.map {
+  ScoreAccessibilityFormatter(localeIdentifier: "zh_CN").label(for: $0)
+}
+```
+
+导航位置使用精确有理数保存小节和拍位。Apple 渲染器会把同一组事件暴露给
+VoiceOver；Android JSON 则提供对应的 TalkBack 数据。详见
+[无障碍与导航说明](Documentation/Accessibility.md)。
 
 ### 导入 MIDI 文件
 
@@ -225,12 +249,17 @@ MusicXML、`.mid` 和 `.midi` 文件。
 git clone https://github.com/cubehead/AthenaNotation.git
 cd AthenaNotation
 swift test
+Tools/check-api-baseline.sh
 swift build --target AthenaNotationRenderAndroid
 swift build --product AthenaNotationExample
 pod lib lint AthenaNotation.podspec --allow-warnings
 ```
 
-当前测试覆盖乐谱语义、排版、SMuFL 字形、MusicXML、MIDI 和分析时间线。
+当前测试覆盖乐谱语义、排版、已提交的 SVG 雕版金图、SMuFL 字形、MusicXML、
+MIDI、无障碍、导航和分析时间线。
+
+金图评审流程见[雕版视觉回归](Documentation/VisualRegression.md)，1.x 兼容性
+门禁见[公开 API 稳定性](Documentation/APIStability.zh-CN.md)。
 
 ## 路线图
 
@@ -239,10 +268,13 @@ pod lib lint AthenaNotation.podspec --allow-warnings
 - [x] Android 绘制列表和 Jetpack Compose Canvas 适配器
 - [x] MusicXML 和 MIDI 文件导入
 - [x] Swift Package Manager 和 CocoaPods 发布配置
-- [ ] 扩展 MusicXML 符号覆盖范围
-- [ ] 增加雕版视觉回归测试
-- [ ] 完善无障碍与乐谱导航 API
-- [ ] 稳定 1.0 公开 API
+- [x] 扩展 MusicXML 符号覆盖范围
+- [x] 增加雕版视觉回归测试
+- [x] 完善无障碍与乐谱导航 API
+- [x] 稳定 1.0 公开 API
+
+1.0 路线图已经完成。后续工作通过 GitHub Issues 跟踪，并遵守
+[1.x 兼容性承诺](Documentation/APIStability.zh-CN.md)。
 
 ## 参与贡献
 

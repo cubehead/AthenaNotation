@@ -13,6 +13,8 @@ jobs:
         run: sudo xcode-select -s /Applications/Xcode_16.2.app
       - name: Test
         run: swift test
+      - name: Verify public API baseline
+        run: Tools/check-api-baseline.sh
       - name: Build Android renderer product
         run: swift build --target AthenaNotationRenderAndroid
       - name: Build example
@@ -26,3 +28,23 @@ jobs:
         run: gem install cocoapods --no-document
       - name: Lint Podspec
         run: pod lib lint AthenaNotation.podspec --allow-warnings
+
+  android-compose:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - uses: android-actions/setup-android@v3
+      - name: Install Android SDK 35
+        run: sdkmanager "platforms;android-35" "build-tools;35.0.0"
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Compile Compose adapter
+        working-directory: Examples/AthenaNotationAndroid
+        run: >-
+          ./gradlew :bridge:compileDebugKotlin
+          -x buildSwiftDebugArm64
+          -x buildZlibBootstrapArm64
+          -x copyDebugSwiftLibraries

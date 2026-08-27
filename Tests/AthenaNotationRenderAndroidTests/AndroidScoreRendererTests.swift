@@ -36,9 +36,12 @@ import Testing
   #expect(scene.commands.contains { $0.role == "beam" })
   #expect(scene.commands.contains { $0.role == "playbackHighlight" })
   #expect(scene.commands.filter { $0.role == "barline" }.contains { $0.lineWidth == 4 })
+  #expect(scene.accessibility.map(\.eventID) == ["n1", "n2"])
+  #expect(scene.accessibility.first?.label.contains("Measure 1, beat 1") == true)
 
   let json = try scene.jsonString()
   #expect(json.contains("playbackHighlight"))
+  #expect(json.contains("accessibility"))
   #expect(try JSONSerialization.jsonObject(with: Data(json.utf8)) is [String: Any])
 }
 
@@ -124,6 +127,26 @@ import Testing
   })
   let downwardStemX = try #require(downwardStem.points.first?.x)
   #expect(abs(downwardStemX - ((downwardHead.x ?? 0) - 5.2)) < 0.001)
+}
+
+@Test func eventAttachmentOnChordRendersOnlyOnce() {
+  let score = NotationScore(
+    staves: [NotationStaff(id: "treble", clef: .treble)],
+    voices: [NotationVoice(id: "voice", events: [NotationEvent(
+      id: .init(rawValue: "chord"),
+      content: .notes([pitch(60, .c, 4), pitch(64, .e, 4)]),
+      duration: Rational(1, 4),
+      staffID: "treble",
+      attachments: [NotationAttachment(
+        id: "dynamic",
+        content: .dynamic(label: "mf", velocity: nil)
+      )]
+    )])]
+  )
+  let scene = AndroidScoreRenderer(options: .init(width: 600, height: 260))
+    .render(score: score)
+
+  #expect(scene.commands.filter { $0.role == "dynamic" }.count == 1)
 }
 
 private func pitch(_ midi: UInt8, _ step: DiatonicStep, _ octave: Int) -> NotatedPitch {

@@ -1,6 +1,7 @@
 #if SWIFT_PACKAGE
   import AthenaNotationCore
   import AthenaNotationLayout
+  import AthenaScoreAnalysis
 #endif
 import Foundation
 
@@ -34,6 +35,7 @@ public struct AndroidRenderBridge: Sendable {
     width: Double,
     height: Double,
     preferredSystemCount: Int = 1,
+    accessibilityLocaleIdentifier: String = "en_US",
     playbackEventIDs: [String] = []
   ) throws -> String {
     let score = try JSONDecoder().decode(NotationScore.self, from: Data(scoreJSON.utf8))
@@ -41,7 +43,8 @@ public struct AndroidRenderBridge: Sendable {
     return try AndroidScoreRenderer(options: .init(
       width: width,
       height: height,
-      preferredSystemCount: preferredSystemCount
+      preferredSystemCount: preferredSystemCount,
+      accessibilityLocaleIdentifier: accessibilityLocaleIdentifier
     )).renderJSON(score: score, playbackEventIDs: ids)
   }
 }
@@ -56,6 +59,7 @@ public struct AndroidScoreRenderer: Sendable {
     public var horizontalPadding: Double
     public var lineSpacing: Double
     public var interStaffGap: Double
+    public var accessibilityLocaleIdentifier: String
 
     public init(
       width: Double = 1_024,
@@ -63,7 +67,8 @@ public struct AndroidScoreRenderer: Sendable {
       preferredSystemCount: Int = 1,
       horizontalPadding: Double = 36,
       lineSpacing: Double = 12,
-      interStaffGap: Double = 48
+      interStaffGap: Double = 48,
+      accessibilityLocaleIdentifier: String = "en_US"
     ) {
       precondition(width > 0 && height > 0)
       precondition(preferredSystemCount > 0)
@@ -74,6 +79,7 @@ public struct AndroidScoreRenderer: Sendable {
       self.horizontalPadding = horizontalPadding
       self.lineSpacing = lineSpacing
       self.interStaffGap = interStaffGap
+      self.accessibilityLocaleIdentifier = accessibilityLocaleIdentifier
     }
   }
 
@@ -259,7 +265,24 @@ public struct AndroidScoreRenderer: Sendable {
         top: firstStaffTop
       ))
     }
-    return AndroidRenderScene(width: options.width, height: options.height, commands: commands)
+    let accessibilityFormatter = ScoreAccessibilityFormatter(
+      localeIdentifier: options.accessibilityLocaleIdentifier
+    )
+    let accessibility = ScoreNavigator(score: score).entries.map { entry in
+      AndroidAccessibilityElement(
+        eventID: entry.id.rawValue,
+        label: accessibilityFormatter.label(for: entry),
+        measureNumber: entry.measureNumber,
+        beat: entry.beat.description,
+        onset: entry.onset.description
+      )
+    }
+    return AndroidRenderScene(
+      width: options.width,
+      height: options.height,
+      commands: commands,
+      accessibility: accessibility
+    )
   }
 
   public func renderJSON(
@@ -491,6 +514,7 @@ public struct AndroidScoreRenderer: Sendable {
     stemEndY: Double?
   ) -> [AndroidRenderCommand] {
     attachments.compactMap { attachment in
+      if attachment.anchor == .event, noteheadIndex != 0 { return nil }
       if case .notehead(let index) = attachment.anchor, index != noteheadIndex { return nil }
       let attachmentY = attachment.placement == .below
         ? max(y + 27, (stemEndY ?? y) + 13)

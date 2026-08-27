@@ -94,6 +94,7 @@ The four device tests verify:
 - MusicXML import and Swift display-list generation
 - MIDI import and Swift display-list generation
 - Compose rendering with black engraving pixels and blue playback highlighting
+- Event-level TalkBack semantics generated from Swift navigation metadata
 
 The screenshot test also writes `athena-notation.png` into the app's external
 files directory while the test package is installed. The example packages a

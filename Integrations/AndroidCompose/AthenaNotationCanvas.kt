@@ -8,15 +8,20 @@ import android.graphics.Typeface
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.nativeCanvas
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import org.json.JSONArray
@@ -116,69 +121,80 @@ private fun NotationSceneCanvas(
     fitWidth: Boolean,
     colors: AthenaNotationColors,
 ) {
-    Canvas(modifier = modifier) {
-        val widthScale = size.width / scene.width
-        val scale = if (fitWidth) widthScale else min(widthScale, size.height / scene.height)
-        val offsetX = (size.width - scene.width * scale) / 2f
-        val offsetY = if (fitWidth) 0f else (size.height - scene.height * scale) / 2f
-        val canvas = drawContext.canvas.nativeCanvas
-        canvas.save()
-        canvas.translate(offsetX, offsetY)
-        canvas.scale(scale, scale)
+    Box(modifier = modifier) {
+        Canvas(modifier = Modifier.matchParentSize()) {
+            val widthScale = size.width / scene.width
+            val scale = if (fitWidth) widthScale else min(widthScale, size.height / scene.height)
+            val offsetX = (size.width - scene.width * scale) / 2f
+            val offsetY = if (fitWidth) 0f else (size.height - scene.height * scale) / 2f
+            val canvas = drawContext.canvas.nativeCanvas
+            canvas.save()
+            canvas.translate(offsetX, offsetY)
+            canvas.scale(scale, scale)
 
-        scene.commands.forEach { command ->
-            val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-                color = command.resolvedColor(colors)
-                style = if (command.fill) Paint.Style.FILL else Paint.Style.STROKE
-                strokeWidth = command.lineWidth
-                strokeCap = if (command.role == "stem") Paint.Cap.BUTT else Paint.Cap.ROUND
-                strokeJoin = Paint.Join.ROUND
-            }
-            when (command.kind) {
-                "line" -> if (command.points.size >= 2) {
-                    canvas.drawLine(
-                        command.points[0].x, command.points[0].y,
-                        command.points[1].x, command.points[1].y,
+            scene.commands.forEach { command ->
+                val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                    color = command.resolvedColor(colors)
+                    style = if (command.fill) Paint.Style.FILL else Paint.Style.STROKE
+                    strokeWidth = command.lineWidth
+                    strokeCap = if (command.role == "stem") Paint.Cap.BUTT else Paint.Cap.ROUND
+                    strokeJoin = Paint.Join.ROUND
+                }
+                when (command.kind) {
+                    "line" -> if (command.points.size >= 2) {
+                        canvas.drawLine(
+                            command.points[0].x, command.points[0].y,
+                            command.points[1].x, command.points[1].y,
+                            paint,
+                        )
+                    }
+                    "rectangle" -> canvas.drawRect(
+                        command.x, command.y,
+                        command.x + command.width, command.y + command.height,
                         paint,
                     )
-                }
-                "rectangle" -> canvas.drawRect(
-                    command.x, command.y,
-                    command.x + command.width, command.y + command.height,
-                    paint,
-                )
-                "ellipse" -> canvas.drawOval(
-                    command.x, command.y,
-                    command.x + command.width, command.y + command.height,
-                    paint,
-                )
-                "polygon" -> if (command.points.isNotEmpty()) {
-                    val path = Path().apply {
-                        moveTo(command.points[0].x, command.points[0].y)
-                        command.points.drop(1).forEach { lineTo(it.x, it.y) }
-                        close()
+                    "ellipse" -> canvas.drawOval(
+                        command.x, command.y,
+                        command.x + command.width, command.y + command.height,
+                        paint,
+                    )
+                    "polygon" -> if (command.points.isNotEmpty()) {
+                        val path = Path().apply {
+                            moveTo(command.points[0].x, command.points[0].y)
+                            command.points.drop(1).forEach { lineTo(it.x, it.y) }
+                            close()
+                        }
+                        canvas.drawPath(path, paint)
                     }
-                    canvas.drawPath(path, paint)
-                }
-                "path" -> canvas.drawPath(command.androidPath(), paint)
-                "glyph", "text" -> command.text?.let { value ->
-                    paint.style = Paint.Style.FILL
-                    paint.textSize = command.fontSize
-                    paint.textAlign = Paint.Align.CENTER
-                    if (command.kind == "glyph") paint.typeface = bravuraTypeface
-                    val baseline = if (command.kind == "glyph") {
-                        val inkBounds = Rect()
-                        paint.getTextBounds(value, 0, value.length, inkBounds)
-                        command.y - inkBounds.exactCenterY()
-                    } else {
-                        val metrics = paint.fontMetrics
-                        command.y - (metrics.ascent + metrics.descent) / 2f
+                    "path" -> canvas.drawPath(command.androidPath(), paint)
+                    "glyph", "text" -> command.text?.let { value ->
+                        paint.style = Paint.Style.FILL
+                        paint.textSize = command.fontSize
+                        paint.textAlign = Paint.Align.CENTER
+                        if (command.kind == "glyph") paint.typeface = bravuraTypeface
+                        val baseline = if (command.kind == "glyph") {
+                            val inkBounds = Rect()
+                            paint.getTextBounds(value, 0, value.length, inkBounds)
+                            command.y - inkBounds.exactCenterY()
+                        } else {
+                            val metrics = paint.fontMetrics
+                            command.y - (metrics.ascent + metrics.descent) / 2f
+                        }
+                        canvas.drawText(value, command.x, baseline, paint)
                     }
-                    canvas.drawText(value, command.x, baseline, paint)
                 }
             }
+            canvas.restore()
         }
-        canvas.restore()
+        Column(modifier = Modifier.matchParentSize()) {
+            scene.accessibility.forEach { element ->
+                Spacer(
+                    modifier = Modifier
+                        .size(1.dp)
+                        .semantics { contentDescription = element.label },
+                )
+            }
+        }
     }
 }
 
@@ -229,6 +245,7 @@ private data class NotationScene(
     val width: Float,
     val height: Float,
     val commands: List<DrawCommand>,
+    val accessibility: List<AccessibilityElement>,
 ) {
     companion object {
         fun parse(json: String): NotationScene {
@@ -258,10 +275,21 @@ private data class NotationScene(
                         fontSize = command.optDouble("fontSize", 12.0).toFloat(),
                     )
                 },
+                accessibility = root.optJSONArray("accessibility")?.objects()?.map { element ->
+                    AccessibilityElement(
+                        eventID = element.getString("eventID"),
+                        label = element.getString("label"),
+                    )
+                } ?: emptyList(),
             )
         }
     }
 }
+
+private data class AccessibilityElement(
+    val eventID: String,
+    val label: String,
+)
 
 private fun JSONArray.objects(): List<JSONObject> =
     (0 until length()).map { getJSONObject(it) }

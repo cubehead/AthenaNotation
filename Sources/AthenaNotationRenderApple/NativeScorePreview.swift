@@ -4,12 +4,16 @@
 #if SWIFT_PACKAGE
   import AthenaNotationLayout
 #endif
+#if SWIFT_PACKAGE
+  import AthenaScoreAnalysis
+#endif
 import SwiftUI
 
 /// Native Apple renderer for the current VexFlow-to-Swift port subset.
 @available(iOS 17.0, macOS 15.0, *)
 public struct NativeScorePreview: View {
   @Environment(\.colorScheme) private var colorScheme
+  @Environment(\.locale) private var locale
 
   private let score: NotationScore
   private let playbackEventIDs: Set<NotationEventID>
@@ -233,6 +237,19 @@ public struct NativeScorePreview: View {
         }
       }
       .background(resolvedTheme.background)
+      .accessibilityElement(children: .contain)
+      .accessibilityLabel(Text("Musical score"))
+      .accessibilityChildren {
+        let navigator = ScoreNavigator(score: score)
+        let formatter = ScoreAccessibilityFormatter(localeIdentifier: locale.identifier)
+        ForEach(navigator.entries) { entry in
+          Color.clear
+            .frame(width: 1, height: 1)
+            .accessibilityElement()
+            .accessibilityLabel(Text(formatter.label(for: entry)))
+            .accessibilityIdentifier(entry.id.rawValue)
+        }
+      }
     }
   }
 
@@ -1278,6 +1295,9 @@ public struct NativeScorePreview: View {
     in context: inout GraphicsContext
   ) {
     for attachment in attachments {
+      if attachment.anchor == .event, noteheadIndex != 0 {
+        continue
+      }
       if case .notehead(let targetIndex) = attachment.anchor,
         targetIndex != noteheadIndex
       {

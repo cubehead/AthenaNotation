@@ -10,6 +10,8 @@ import SwiftUI
 /// the available viewport is shorter than the notation canvas.
 @available(iOS 17.0, macOS 15.0, *)
 public struct ScrollableNativeScorePreview: View {
+  @Environment(\.colorScheme) private var colorScheme
+
   private let score: NotationScore
   private let playbackEventIDs: Set<NotationEventID>
   private let preferredSystemCount: Int
@@ -67,6 +69,12 @@ public struct ScrollableNativeScorePreview: View {
       }
       .scrollIndicators(.visible)
       .scrollBounceBehavior(.basedOnSize)
+      .background(resolvedTheme.background)
     }
+    .background(resolvedTheme.background)
+  }
+
+  private var resolvedTheme: NativeScoreTheme {
+    theme ?? (colorScheme == .dark ? .dark : .light)
   }
 }

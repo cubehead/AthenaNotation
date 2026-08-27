@@ -29,7 +29,8 @@ spanners and voltas. Layout depends only on the semantic model.
 
 Renders the layout with SwiftUI Canvas, CoreText and the bundled Bravura SMuFL
 font. Highlighted event IDs are accepted as rendering state through the public
-view API.
+view API. The canvas publishes virtual, localized score events to VoiceOver
+through `ScoreNavigator` and `ScoreAccessibilityFormatter`.
 
 ## AthenaNotationRenderAndroid
 
@@ -38,18 +39,27 @@ platform-neutral display list. `AndroidRenderBridge` exposes a string-only JSON
 boundary suitable for `swift-java`/JNI. The Jetpack Compose adapter executes
 lines, paths, polygons, text and Bravura glyph commands with Android's native
 Canvas. It does not import SwiftUI, CoreText, UIKit, or Android APIs, which keeps
-the Swift product independently cross-compilable.
+the Swift product independently cross-compilable. The scene also carries
+event-level accessibility metadata that the included Compose adapter exposes
+to TalkBack.
 
 ## AthenaScoreAnalysis
 
-Builds tempo, count-in, playback, expression, pedal and active-note timelines.
-The output is deterministic score data that clients can query by musical time.
+Builds tempo, count-in, playback, expression, pedal and active-note timelines,
+plus deterministic event navigation and localized accessibility descriptions.
+Clients can query by exact musical time, event identifier, measure, beat, or
+staff without importing a UI framework.
 
 ## Importers
 
 `AthenaMusicXML` and `AthenaMIDI` translate external files into the same
 `NotationScore` model. Unknown or unsupported data should produce diagnostics
 without leaking format-specific types into the core.
+
+MusicXML preserves common note and direction notation, including fingerings,
+articulations, ornaments, lyrics, text, dynamics, hairpins, pedal, octave
+shifts, glissandi, tuplets, slurs, ties, repeats and voltas. Diagnostics expose
+stable codes, severities and optional measure numbers.
 
 ## Dependency boundary
 

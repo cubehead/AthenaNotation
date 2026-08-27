@@ -7,11 +7,27 @@ import Foundation
   import FoundationXML
 #endif
 
-public struct MusicXMLDiagnostic: Hashable, Sendable {
-  public let message: String
+public enum MusicXMLDiagnosticSeverity: String, Hashable, Sendable, Codable {
+  case information
+  case warning
+}
 
-  public init(_ message: String) {
+public struct MusicXMLDiagnostic: Hashable, Sendable, Codable {
+  public let code: String
+  public let severity: MusicXMLDiagnosticSeverity
+  public let message: String
+  public let measureNumber: String?
+
+  public init(
+    _ message: String,
+    code: String = "musicxml.import",
+    severity: MusicXMLDiagnosticSeverity = .warning,
+    measureNumber: String? = nil
+  ) {
+    self.code = code
+    self.severity = severity
     self.message = message
+    self.measureNumber = measureNumber
   }
 }
 
@@ -103,6 +119,24 @@ private struct TieMarker: Hashable {
 private struct RangeMarker: Hashable {
   let number: String
   let type: String
+  let kind: NotationSpannerKind
+  let placement: AttachmentPlacement
+}
+
+private struct PendingAttachment {
+  let onset: Rational
+  let staff: Int?
+  let attachment: NotationAttachment
+}
+
+private struct DirectionRangeMarker {
+  let family: String
+  let number: String
+  let type: String
+  let kind: NotationSpannerKind?
+  let onset: Rational
+  let staff: Int?
+  let placement: AttachmentPlacement
 }
 
 private struct TupletMarker: Hashable {
@@ -142,6 +176,8 @@ private struct ImportState {
     var activeVoltas: [String: (onset: Rational, numbers: [UInt8])] = [:]
     var voltas: [NotationVolta] = []
     var tempoChangesByOnset: [Rational: NotationTempoChange] = [:]
+    var pendingAttachments: [PendingAttachment] = []
+    var directionRangeMarkers: [DirectionRangeMarker] = []
     var diagnostics: [MusicXMLDiagnostic] = []
 
     let partID = part.attributes["id"] ?? "P1"
@@ -205,10 +241,29 @@ private struct ImportState {
               beatsPerMinute: bpm
             )
           }
+          let directionIndex = pendingAttachments.count + directionRangeMarkers.count
+          pendingAttachments.append(
+            contentsOf: Self.directionAttachments(
+              from: child,
+              onset: onset,
+              partID: partID,
+              measureIndex: measureIndex,
+              directionIndex: directionIndex
+            )
+          )
+          directionRangeMarkers.append(
+            contentsOf: Self.directionRanges(from: child, onset: onset)
+          )
         case "note":
           let durationTicks = Int(child.child("duration")?.trimmedText ?? "") ?? 0
           guard durationTicks > 0 else {
-            diagnostics.append(MusicXMLDiagnostic("Skipped grace or zero-duration note"))
+            diagnostics.append(
+              MusicXMLDiagnostic(
+                "Skipped grace or zero-duration note",
+                code: "musicxml.note.grace-unsupported",
+                measureNumber: measure.attributes["number"]
+              )
+            )
             continue
           }
           let staff = Int(child.child("staff")?.trimmedText ?? "1") ?? 1
@@ -252,7 +307,7 @@ private struct ImportState {
             {
               let attachments =
                 existing.event.attachments
-                + Self.fingeringAttachment(
+                + Self.noteAttachments(
                   from: child,
                   eventID: existing.event.id,
                   noteheadIndex: pitches.count
@@ -281,7 +336,7 @@ private struct ImportState {
                   dotCount: dotCount,
                   staffID: staffID,
                   hand: Self.hand(forStaff: staff),
-                  attachments: Self.fingeringAttachment(
+                  attachments: Self.noteAttachments(
                     from: child,
                     eventID: eventID,
                     noteheadIndex: 0
@@ -294,7 +349,13 @@ private struct ImportState {
               )
             }
           } else {
-            diagnostics.append(MusicXMLDiagnostic("Skipped note without pitch or rest"))
+            diagnostics.append(
+              MusicXMLDiagnostic(
+                "Skipped note without pitch or rest",
+                code: "musicxml.note.missing-content",
+                measureNumber: measure.attributes["number"]
+              )
+            )
           }
         case "barline":
           let location = child.attributes["location"] ?? "right"
@@ -342,16 +403,40 @@ private struct ImportState {
       measureStart = measureStart + measureDuration
     }
 
+    for pending in pendingAttachments {
+      guard let key = Self.anchorKey(
+        for: pending.onset,
+        staff: pending.staff,
+        preferFollowing: true,
+        in: importedByKey
+      ), var imported = importedByKey[key]
+      else {
+        diagnostics.append(
+          MusicXMLDiagnostic(
+            "Could not anchor direction attachment at \(pending.onset)",
+            code: "musicxml.direction.unanchored"
+          )
+        )
+        continue
+      }
+      imported.event = Self.appending(pending.attachment, to: imported.event)
+      importedByKey[key] = imported
+    }
+
     let grouped = Dictionary(grouping: importedByKey) { $0.key.voice }
     let sortedVoiceKeys = grouped.keys.sorted {
       $0.staff == $1.staff ? $0.voice < $1.voice : $0.staff < $1.staff
     }
-    var spanners: [NotationSpanner] = []
+    var spanners = Self.directionSpanners(
+      markers: directionRangeMarkers,
+      importedByKey: importedByKey,
+      diagnostics: &diagnostics
+    )
     var tuplets: [NotationTuplet] = []
     for key in sortedVoiceKeys {
       let imported = grouped[key, default: []].map(\.value).sorted { $0.onset < $1.onset }
       var activeTies: [PitchIdentity: NotationEventID] = [:]
-      var activeSlurs: [String: NotationEventID] = [:]
+      var activeRanges: [String: (eventID: NotationEventID, marker: RangeMarker)] = [:]
       var activeTuplets: [String: ActiveTuplet] = [:]
       for item in imported {
         for marker in Set(item.tieMarkers) where marker.type == "stop" {
@@ -367,13 +452,15 @@ private struct ImportState {
           }
         }
         for marker in Set(item.slurMarkers) where marker.type == "stop" {
-          if let startID = activeSlurs.removeValue(forKey: marker.number) {
+          let rangeKey = "\(marker.kind.rawValue):\(marker.number)"
+          if let active = activeRanges.removeValue(forKey: rangeKey) {
             spanners.append(
               NotationSpanner(
-                id: "slur-\(key.voice)-\(marker.number)-\(spanners.count)",
-                kind: .slur,
-                startEventID: startID,
-                endEventID: item.event.id
+                id: "\(marker.kind.rawValue)-\(key.voice)-\(marker.number)-\(spanners.count)",
+                kind: active.marker.kind,
+                startEventID: active.eventID,
+                endEventID: item.event.id,
+                placement: active.marker.placement
               )
             )
           }
@@ -382,7 +469,7 @@ private struct ImportState {
           activeTies[marker.pitch] = item.event.id
         }
         for marker in Set(item.slurMarkers) where marker.type == "start" {
-          activeSlurs[marker.number] = item.event.id
+          activeRanges["\(marker.kind.rawValue):\(marker.number)"] = (item.event.id, marker)
         }
         for marker in Set(item.tupletMarkers) where marker.type == "start" {
           activeTuplets[marker.number] = ActiveTuplet(
@@ -410,8 +497,13 @@ private struct ImportState {
           }
         }
       }
-      if !activeTies.isEmpty || !activeSlurs.isEmpty || !activeTuplets.isEmpty {
-        diagnostics.append(MusicXMLDiagnostic("Unclosed notation range in voice \(key.voice)"))
+      if !activeTies.isEmpty || !activeRanges.isEmpty || !activeTuplets.isEmpty {
+        diagnostics.append(
+          MusicXMLDiagnostic(
+            "Unclosed notation range in voice \(key.voice)",
+            code: "musicxml.notation.unclosed-range"
+          )
+        )
       }
     }
 
@@ -530,8 +622,24 @@ private struct ImportState {
     let slurs =
       notations?.children(named: "slur").compactMap { node -> RangeMarker? in
         guard let type = node.attributes["type"] else { return nil }
-        return RangeMarker(number: node.attributes["number"] ?? "1", type: type)
+        return RangeMarker(
+          number: node.attributes["number"] ?? "1",
+          type: type,
+          kind: .slur,
+          placement: placement(from: node)
+        )
       } ?? []
+    let glissandi = ["glissando", "slide"].flatMap { elementName in
+      notations?.children(named: elementName).compactMap { node -> RangeMarker? in
+        guard let type = node.attributes["type"] else { return nil }
+        return RangeMarker(
+          number: node.attributes["number"] ?? "1",
+          type: type,
+          kind: .glissando,
+          placement: placement(from: node)
+        )
+      } ?? []
+    }
     let modification = note.child("time-modification")
     let actualCount = UInt8(modification?.child("actual-notes")?.trimmedText ?? "") ?? 3
     let normalCount = UInt8(modification?.child("normal-notes")?.trimmedText ?? "") ?? 2
@@ -545,28 +653,386 @@ private struct ImportState {
           normalCount: normalCount
         )
       } ?? []
-    return (ties, slurs, tuplets)
+    return (ties, slurs + glissandi, tuplets)
   }
 
-  private static func fingeringAttachment(
+  private static func noteAttachments(
     from note: XMLTreeNode,
     eventID: NotationEventID,
     noteheadIndex: Int
   ) -> [NotationAttachment] {
-    guard
-      let value = UInt8(
-        note.child("notations")?.child("technical")?.child("fingering")?.trimmedText ?? ""
-      ), let finger = PianoFinger(rawValue: value)
-    else { return [] }
-    return [
-      NotationAttachment(
-        id: "\(eventID.rawValue)-finger-\(noteheadIndex)",
-        anchor: .notehead(index: noteheadIndex),
-        placement: .automatic,
-        content: .fingering(finger)
+    var result: [NotationAttachment] = []
+    let notations = note.child("notations")
+    let technical = notations?.child("technical")
+
+    if let value = UInt8(technical?.child("fingering")?.trimmedText ?? ""),
+      let finger = PianoFinger(rawValue: value)
+    {
+      result.append(
+        NotationAttachment(
+          id: "\(eventID.rawValue)-finger-\(noteheadIndex)",
+          anchor: .notehead(index: noteheadIndex),
+          placement: .automatic,
+          content: .fingering(finger)
+        )
       )
+    }
+
+    if let articulations = notations?.child("articulations") {
+      for (index, articulation) in articulations.children.enumerated() {
+        let placement = placement(from: articulation)
+        let glyphName = articulationGlyphName(
+          for: articulation.name,
+          placement: placement
+        )
+        result.append(
+          NotationAttachment(
+            id: "\(eventID.rawValue)-articulation-\(index)",
+            placement: placement,
+            content: glyphName.map { .smuflGlyph(name: $0) }
+              ?? .technique(name: articulation.name)
+          )
+        )
+      }
+    }
+
+    if let ornaments = notations?.child("ornaments") {
+      for (index, ornament) in ornaments.children.enumerated()
+      where ornament.name != "wavy-line" {
+        let glyphName = ornamentGlyphNames[ornament.name]
+        result.append(
+          NotationAttachment(
+            id: "\(eventID.rawValue)-ornament-\(index)",
+            placement: placement(from: ornament),
+            content: glyphName.map { .smuflGlyph(name: $0) }
+              ?? .technique(name: ornament.name)
+          )
+        )
+      }
+    }
+
+    for (index, fermata) in (notations?.children(named: "fermata") ?? []).enumerated() {
+      let placement: AttachmentPlacement =
+        fermata.attributes["type"] == "inverted" ? .below : .above
+      result.append(
+        NotationAttachment(
+          id: "\(eventID.rawValue)-fermata-\(index)",
+          placement: placement,
+          content: .smuflGlyph(
+            name: placement == .below ? "fermataBelow" : "fermataAbove"
+          )
+        )
+      )
+    }
+
+    if notations?.child("arpeggiate") != nil {
+      result.append(
+        NotationAttachment(
+          id: "\(eventID.rawValue)-arpeggiate",
+          placement: .left,
+          content: .technique(name: "arpeggio")
+        )
+      )
+    }
+
+    let namedTechniques = [
+      "up-bow", "down-bow", "harmonic", "open-string", "stopped",
+      "snap-pizzicato", "heel", "toe", "pluck", "tap",
     ]
+    for name in namedTechniques where technical?.child(name) != nil {
+      result.append(
+        NotationAttachment(
+          id: "\(eventID.rawValue)-technical-\(name)",
+          placement: placement(from: technical?.child(name)),
+          content: .technique(name: name)
+        )
+      )
+    }
+
+    for (index, lyric) in note.children(named: "lyric").enumerated() {
+      let syllabic = lyric.child("syllabic")?.trimmedText
+      let text = lyric.children(named: "text").map(\.trimmedText).joined()
+      guard !text.isEmpty else { continue }
+      let renderedText = syllabic == "begin" || syllabic == "middle" ? text + "-" : text
+      result.append(
+        NotationAttachment(
+          id: "\(eventID.rawValue)-lyric-\(index)",
+          placement: .below,
+          content: .text(renderedText)
+        )
+      )
+    }
+
+    return result
   }
+
+  private static func directionAttachments(
+    from direction: XMLTreeNode,
+    onset: Rational,
+    partID: String,
+    measureIndex: Int,
+    directionIndex: Int
+  ) -> [PendingAttachment] {
+    let staff = Int(direction.child("staff")?.trimmedText ?? "")
+    let directionPlacement = placement(from: direction)
+    let soundDynamics = direction.child("sound")?.attributes["dynamics"].flatMap(Double.init)
+    let explicitVelocity = soundDynamics.map {
+      UInt8(min(127, max(1, Int(($0 * 1.27).rounded()))))
+    }
+    var result: [PendingAttachment] = []
+
+    func append(_ content: AttachmentContent, placement: AttachmentPlacement? = nil) {
+      result.append(
+        PendingAttachment(
+          onset: onset,
+          staff: staff,
+          attachment: NotationAttachment(
+            id: "\(partID)-m\(measureIndex + 1)-direction-\(directionIndex)-\(result.count)",
+            placement: placement ?? directionPlacement,
+            content: content
+          )
+        )
+      )
+    }
+
+    for directionType in direction.children(named: "direction-type") {
+      for dynamics in directionType.children(named: "dynamics") {
+        for dynamic in dynamics.children {
+          append(.dynamic(label: dynamic.name, velocity: explicitVelocity))
+        }
+      }
+      for words in directionType.children(named: "words") {
+        let value = words.trimmedText
+        if !value.isEmpty { append(.text(value), placement: placement(from: words)) }
+      }
+      for rehearsal in directionType.children(named: "rehearsal") {
+        let value = rehearsal.trimmedText
+        if !value.isEmpty {
+          append(.technique(name: value), placement: placement(from: rehearsal))
+        }
+      }
+      if directionType.child("segno") != nil { append(.technique(name: "segno")) }
+      if directionType.child("coda") != nil { append(.technique(name: "coda")) }
+    }
+    return result
+  }
+
+  private static func directionRanges(
+    from direction: XMLTreeNode,
+    onset: Rational
+  ) -> [DirectionRangeMarker] {
+    let staff = Int(direction.child("staff")?.trimmedText ?? "")
+    let inheritedPlacement = placement(from: direction)
+    var result: [DirectionRangeMarker] = []
+
+    for directionType in direction.children(named: "direction-type") {
+      for wedge in directionType.children(named: "wedge") {
+        guard let type = wedge.attributes["type"] else { continue }
+        let kind: NotationSpannerKind?
+        switch type {
+        case "crescendo": kind = .crescendo
+        case "diminuendo": kind = .diminuendo
+        default: kind = nil
+        }
+        result.append(
+          DirectionRangeMarker(
+            family: "wedge",
+            number: wedge.attributes["number"] ?? "1",
+            type: type,
+            kind: kind,
+            onset: onset,
+            staff: staff,
+            placement: placement(from: wedge, fallback: inheritedPlacement)
+          )
+        )
+      }
+      for pedal in directionType.children(named: "pedal") {
+        guard let type = pedal.attributes["type"] else { continue }
+        result.append(
+          DirectionRangeMarker(
+            family: "pedal",
+            number: pedal.attributes["number"] ?? "1",
+            type: type,
+            kind: type == "stop" || type == "discontinue" ? nil : .pedal,
+            onset: onset,
+            staff: staff,
+            placement: placement(from: pedal, fallback: .below)
+          )
+        )
+      }
+      for shift in directionType.children(named: "octave-shift") {
+        guard let type = shift.attributes["type"] else { continue }
+        result.append(
+          DirectionRangeMarker(
+            family: "octave-shift",
+            number: shift.attributes["number"] ?? "1",
+            type: type,
+            kind: type == "stop" ? nil : .ottava,
+            onset: onset,
+            staff: staff,
+            placement: placement(from: shift, fallback: .above)
+          )
+        )
+      }
+    }
+    return result
+  }
+
+  private static func directionSpanners(
+    markers: [DirectionRangeMarker],
+    importedByKey: [EventKey: ImportedEvent],
+    diagnostics: inout [MusicXMLDiagnostic]
+  ) -> [NotationSpanner] {
+    struct ActiveRange {
+      let kind: NotationSpannerKind
+      let startEventID: NotationEventID
+      let placement: AttachmentPlacement
+    }
+
+    var active: [String: ActiveRange] = [:]
+    var result: [NotationSpanner] = []
+    for marker in markers {
+      let key = "\(marker.family):\(marker.number)"
+      let isStop = marker.type == "stop" || marker.type == "discontinue"
+      let isChange = marker.type == "change"
+
+      if isStop || isChange {
+        guard let range = active.removeValue(forKey: key),
+          let endKey = anchorKey(
+            for: marker.onset,
+            staff: marker.staff,
+            preferFollowing: false,
+            in: importedByKey
+          ), let endEvent = importedByKey[endKey]?.event
+        else {
+          diagnostics.append(
+            MusicXMLDiagnostic(
+              "Could not close \(marker.family) range \(marker.number)",
+              code: "musicxml.direction.unclosed-range"
+            )
+          )
+          continue
+        }
+        if range.startEventID != endEvent.id {
+          result.append(
+            NotationSpanner(
+              id: "\(marker.family)-\(marker.number)-\(result.count)",
+              kind: range.kind,
+              startEventID: range.startEventID,
+              endEventID: endEvent.id,
+              placement: range.placement
+            )
+          )
+        }
+        if !isChange { continue }
+      }
+
+      guard let kind = marker.kind,
+        let startKey = anchorKey(
+          for: marker.onset,
+          staff: marker.staff,
+          preferFollowing: true,
+          in: importedByKey
+        ), let startEvent = importedByKey[startKey]?.event
+      else {
+        diagnostics.append(
+          MusicXMLDiagnostic(
+            "Could not start \(marker.family) range \(marker.number)",
+            code: "musicxml.direction.unanchored-range"
+          )
+        )
+        continue
+      }
+      active[key] = ActiveRange(
+        kind: kind,
+        startEventID: startEvent.id,
+        placement: marker.placement
+      )
+    }
+
+    for (key, _) in active {
+      diagnostics.append(
+        MusicXMLDiagnostic(
+          "Unclosed direction range \(key)",
+          code: "musicxml.direction.unclosed-range"
+        )
+      )
+    }
+    return result
+  }
+
+  private static func anchorKey(
+    for onset: Rational,
+    staff: Int?,
+    preferFollowing: Bool,
+    in importedByKey: [EventKey: ImportedEvent]
+  ) -> EventKey? {
+    let candidates = importedByKey.keys.filter { staff == nil || $0.voice.staff == staff }
+    let ordered = candidates.sorted {
+      if $0.onset != $1.onset { return $0.onset < $1.onset }
+      if $0.voice.staff != $1.voice.staff { return $0.voice.staff < $1.voice.staff }
+      return $0.voice.voice < $1.voice.voice
+    }
+    if preferFollowing {
+      return ordered.first { $0.onset >= onset } ?? ordered.last
+    }
+    return ordered.last { $0.onset <= onset } ?? ordered.first
+  }
+
+  private static func appending(
+    _ attachment: NotationAttachment,
+    to event: NotationEvent
+  ) -> NotationEvent {
+    NotationEvent(
+      id: event.id,
+      content: event.content,
+      duration: event.duration,
+      writtenDuration: event.writtenDuration,
+      dotCount: event.dotCount,
+      staffID: event.staffID,
+      hand: event.hand,
+      velocity: event.velocity,
+      attachments: event.attachments + [attachment]
+    )
+  }
+
+  private static func placement(
+    from node: XMLTreeNode?,
+    fallback: AttachmentPlacement = .automatic
+  ) -> AttachmentPlacement {
+    switch node?.attributes["placement"] ?? node?.attributes["type"] {
+    case "above", "upright": .above
+    case "below", "inverted": .below
+    case "left": .left
+    case "right": .right
+    default: fallback
+    }
+  }
+
+  private static func articulationGlyphName(
+    for name: String,
+    placement: AttachmentPlacement
+  ) -> String? {
+    let suffix = placement == .below ? "Below" : "Above"
+    switch name {
+    case "accent": return "articAccent\(suffix)"
+    case "staccato": return "articStaccato\(suffix)"
+    case "tenuto": return "articTenuto\(suffix)"
+    case "staccatissimo": return "articStaccatissimo\(suffix)"
+    case "strong-accent": return "articMarcato\(suffix)"
+    case "breath-mark": return "breathMarkComma"
+    case "caesura": return "caesura"
+    default: return nil
+    }
+  }
+
+  private static let ornamentGlyphNames: [String: String] = [
+    "trill-mark": "ornamentTrill",
+    "turn": "ornamentTurn",
+    "inverted-turn": "ornamentTurnInverted",
+    "mordent": "ornamentMordent",
+    "inverted-mordent": "ornamentMordentInverted",
+  ]
 
   private static func pitch(from note: XMLTreeNode) -> NotatedPitch? {
     guard let pitch = note.child("pitch"),

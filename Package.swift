@@ -39,6 +39,7 @@ let package = Package(
       dependencies: [
         "AthenaNotationCore",
         "AthenaNotationLayout",
+        "AthenaScoreAnalysis",
       ],
       resources: [.process("Resources")]
     ),
@@ -47,6 +48,7 @@ let package = Package(
       dependencies: [
         "AthenaNotationCore",
         "AthenaNotationLayout",
+        "AthenaScoreAnalysis",
       ],
       resources: [.process("Resources")]
     ),
@@ -86,7 +88,8 @@ let package = Package(
       dependencies: [
         "AthenaNotationCore",
         "AthenaNotationRenderAndroid",
-      ]
+      ],
+      exclude: ["__Snapshots__"]
     ),
     .testTarget(
       name: "AthenaScoreAnalysisTests",

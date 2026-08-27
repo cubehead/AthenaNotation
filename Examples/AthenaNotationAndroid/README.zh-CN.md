@@ -90,6 +90,7 @@ ScrollableAthenaNotationCanvas(
 - MusicXML 导入及 Swift 绘制列表生成
 - MIDI 导入及 Swift 绘制列表生成
 - Compose 乐谱渲染，包括黑色雕版像素和蓝色播放高亮
+- 由 Swift 导航元数据生成的逐事件 TalkBack 无障碍语义
 
 截图测试还会在测试包安装期间，将 `athena-notation.png` 写入应用外部文件目录。
 示例会打包一个很小的 ARM64 zlib bootstrap，因为 Swift 6.3 Android 版本的
