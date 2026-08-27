@@ -30,13 +30,12 @@ android {
   }
   buildFeatures { compose = true }
 
-  sourceSets.getByName("main").java.srcDir("../../../Integrations/AndroidCompose")
 }
 
 kotlin { compilerOptions { jvmTarget.set(JvmTarget.JVM_17) } }
 
 dependencies {
-  implementation(project(":bridge"))
+  implementation(files("../bridge/build/outputs/aar/athena-notation-android-release.aar"))
   implementation(libs.androidx.core.ktx)
   implementation(libs.androidx.activity.compose)
   implementation(platform(libs.androidx.compose.bom))
@@ -50,3 +49,5 @@ dependencies {
   debugImplementation(libs.androidx.compose.ui.tooling)
   debugImplementation(libs.androidx.compose.ui.test.manifest)
 }
+
+tasks.named("preBuild").configure { dependsOn(":bridge:verifyReleaseAar") }

@@ -31,11 +31,52 @@ Start an ARM64 AVD, or select one in Android Studio's Device Manager:
 $ANDROID_SDK_ROOT/emulator/emulator @Pixel_3a_API_34
 ```
 
-Then validate the host build and run the device-side tests:
+## Build the AAR
+
+Build and verify the distributable release artifact:
 
 ```sh
-./gradlew testDebugUnitTest
-./gradlew connectedDebugAndroidTest
+./gradlew :bridge:verifyReleaseAar
+```
+
+The output is
+`bridge/build/outputs/aar/athena-notation-android-release.aar`. It contains the
+Kotlin/JNI API, Compose renderer, Bravura font, ARM64 Swift library, required
+Swift runtime libraries, libc++, and the zlib bootstrap. A JAR is not sufficient
+because it cannot package Android resources and ABI-specific native libraries.
+
+For a local file dependency, copy the AAR to your app's `libs` directory:
+
+```kotlin
+dependencies {
+    implementation(files("libs/athena-notation-android-release.aar"))
+    implementation(platform("androidx.compose:compose-bom:2024.09.00"))
+    implementation("androidx.compose.ui:ui")
+    implementation("androidx.compose.foundation:foundation")
+}
+```
+
+Render actual input data through the packaged API:
+
+```kotlin
+val notation = SwiftNotation()
+val sceneJSON = notation.renderMusicXML(musicXMLText)
+val midiSceneJSON = notation.renderMIDI(midiBytes)
+val bravura = ResourcesCompat.getFont(
+    context,
+    io.github.cubehead.athenanotation.bridge.R.font.bravura,
+)!!
+
+AthenaNotationCanvas(sceneJSON, bravura, Modifier.fillMaxSize())
+```
+
+## Runtime tests
+
+The example app intentionally depends on the generated **release AAR file**,
+not on the `bridge` source project. With an ARM64 emulator running:
+
+```sh
+./gradlew :app:connectedDebugAndroidTest
 ```
 
 The four device tests verify:
@@ -49,3 +90,11 @@ The screenshot test also writes `athena-notation.png` into the app's external
 files directory while the test package is installed. The example packages a
 small ARM64 zlib bootstrap because Swift 6.3's Android `FoundationXML` binary
 uses zlib symbols without declaring `libz.so` as a direct ELF dependency.
+
+Validated ARM64 emulator matrix:
+
+| Android | API | Result |
+| --- | ---: | --- |
+| Android 9 | 28 | 4/4 passed |
+| Android 14 | 34 | 4/4 passed |
+| Android 15 | 35 | 4/4 passed |

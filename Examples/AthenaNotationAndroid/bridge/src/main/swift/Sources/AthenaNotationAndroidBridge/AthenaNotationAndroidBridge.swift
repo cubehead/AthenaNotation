@@ -13,58 +13,31 @@ public func healthCheck(
   makeJavaString("AthenaNotation Swift Android bridge OK", env: env)
 }
 
-@_cdecl("Java_io_github_cubehead_athenanotation_SwiftNotation_renderMusicXMLFixture")
-public func renderMusicXMLFixture(
+@_cdecl("Java_io_github_cubehead_athenanotation_SwiftNotation_renderMusicXML")
+public func renderMusicXML(
   env: UnsafeMutablePointer<JNIEnv?>,
-  receiver: jobject
+  receiver: jobject,
+  musicXML: jstring
 ) -> jstring {
-  makeJavaString(renderMusicXMLScene(), env: env)
+  guard let xml = readJavaString(musicXML, env: env) else {
+    return makeJavaString(errorJSON("MusicXML: invalid UTF-8 input"), env: env)
+  }
+  return makeJavaString(renderMusicXMLScene(xml), env: env)
 }
 
-@_cdecl("Java_io_github_cubehead_athenanotation_SwiftNotation_renderMIDIFixture")
-public func renderMIDIFixture(
+@_cdecl("Java_io_github_cubehead_athenanotation_SwiftNotation_renderMIDI")
+public func renderMIDI(
   env: UnsafeMutablePointer<JNIEnv?>,
-  receiver: jobject
+  receiver: jobject,
+  midiData: jbyteArray
 ) -> jstring {
-  makeJavaString(renderMIDIScene(), env: env)
+  guard let data = readJavaBytes(midiData, env: env) else {
+    return makeJavaString(errorJSON("MIDI: invalid byte array"), env: env)
+  }
+  return makeJavaString(renderMIDIScene(data), env: env)
 }
 
-private func renderMusicXMLScene() -> String {
-  let xml = """
-    <?xml version="1.0" encoding="UTF-8"?>
-    <score-partwise version="4.0">
-      <part-list>
-        <score-part id="P1"><part-name>Piano</part-name></score-part>
-      </part-list>
-      <part id="P1">
-        <measure number="1">
-          <attributes>
-            <divisions>4</divisions>
-            <key><fifths>0</fifths></key>
-            <time><beats>4</beats><beat-type>4</beat-type></time>
-            <staves>2</staves>
-            <clef number="1"><sign>G</sign><line>2</line></clef>
-            <clef number="2"><sign>F</sign><line>4</line></clef>
-          </attributes>
-          <note>
-            <pitch><step>C</step><octave>5</octave></pitch>
-            <duration>2</duration><voice>1</voice><type>eighth</type><staff>1</staff>
-            <notations><technical><fingering>1</fingering></technical></notations>
-          </note>
-          <note>
-            <pitch><step>D</step><octave>5</octave></pitch>
-            <duration>2</duration><voice>1</voice><type>eighth</type><dot/><staff>1</staff>
-          </note>
-          <backup><duration>4</duration></backup>
-          <note>
-            <pitch><step>C</step><octave>3</octave></pitch>
-            <duration>4</duration><voice>2</voice><type>quarter</type><staff>2</staff>
-          </note>
-          <barline location="right"><bar-style>light-heavy</bar-style></barline>
-        </measure>
-      </part>
-    </score-partwise>
-    """
+private func renderMusicXMLScene(_ xml: String) -> String {
   do {
     let imported = try MusicXMLImporter().parse(data: Data(xml.utf8))
     let highlighted = imported.score.voices.first?.events.first.map { Set([$0.id]) } ?? []
@@ -78,22 +51,37 @@ private func renderMusicXMLScene() -> String {
   }
 }
 
-private func renderMIDIScene() -> String {
-  let midi: [UInt8] = [
-    0x4D, 0x54, 0x68, 0x64, 0, 0, 0, 6, 0, 0, 0, 1, 0x01, 0xE0,
-    0x4D, 0x54, 0x72, 0x6B, 0, 0, 0, 0x14,
-    0, 0xFF, 0x51, 3, 0x07, 0xA1, 0x20,
-    0, 0x90, 60, 100,
-    0x83, 0x60, 0x80, 60, 0,
-    0, 0xFF, 0x2F, 0,
-  ]
+private func renderMIDIScene(_ midi: Data) -> String {
   do {
-    let imported = try MIDIFileImporter().parse(data: Data(midi))
+    let imported = try MIDIFileImporter().parse(data: midi)
     return try AndroidScoreRenderer(options: .init(width: 1_024, height: 480))
       .renderJSON(score: imported.score)
   } catch {
     return errorJSON("MIDI: \(error)")
   }
+}
+
+private func readJavaString(
+  _ value: jstring,
+  env: UnsafeMutablePointer<JNIEnv?>
+) -> String? {
+  guard let characters = env.pointee!.pointee.GetStringUTFChars(env, value, nil) else {
+    return nil
+  }
+  defer { env.pointee!.pointee.ReleaseStringUTFChars(env, value, characters) }
+  return String(cString: characters)
+}
+
+private func readJavaBytes(
+  _ value: jbyteArray,
+  env: UnsafeMutablePointer<JNIEnv?>
+) -> Data? {
+  let count = Int(env.pointee!.pointee.GetArrayLength(env, value))
+  guard let bytes = env.pointee!.pointee.GetByteArrayElements(env, value, nil) else {
+    return nil
+  }
+  defer { env.pointee!.pointee.ReleaseByteArrayElements(env, value, bytes, 2) }
+  return Data(bytes: bytes, count: count)
 }
 
 private func errorJSON(_ message: String) -> String {

@@ -2,8 +2,8 @@ package io.github.cubehead.athenanotation
 
 class SwiftNotation {
     external fun healthCheck(): String
-    external fun renderMusicXMLFixture(): String
-    external fun renderMIDIFixture(): String
+    external fun renderMusicXML(musicXML: String): String
+    external fun renderMIDI(midiData: ByteArray): String
 
     companion object {
         init {

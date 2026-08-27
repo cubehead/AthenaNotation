@@ -11,14 +11,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.core.content.res.ResourcesCompat
 import io.github.cubehead.athenanotation.compose.AthenaNotationCanvas
+import io.github.cubehead.athenanotation.bridge.R as BridgeR
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
             val bridge = remember { SwiftNotation() }
-            val sceneJSON = remember { bridge.renderMusicXMLFixture() }
-            val bravura = remember { ResourcesCompat.getFont(this, R.font.bravura)!! }
+            val sceneJSON = remember { bridge.renderMusicXML(DemoFixtures.musicXML) }
+            val bravura = remember { ResourcesCompat.getFont(this, BridgeR.font.bravura)!! }
 
             Box(modifier = Modifier.fillMaxSize()) {
                 AthenaNotationCanvas(

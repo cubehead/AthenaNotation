@@ -140,7 +140,9 @@ let sceneJSON = try AndroidRenderBridge().renderScoreJSON(
 不使用 WebView 或 JavaScript。详见
 [Android Compose 接入说明](Integrations/AndroidCompose/README.md)；也可以直接运行
 [完整 Android 示例](Examples/AthenaNotationAndroid/README.md)，在 ARM64 模拟器中
-端到端测试 Swift/JNI 桥接、MusicXML、MIDI、Bravura 渲染和播放高亮。
+构建可分发 AAR，并在 Android 9～15 上端到端测试 Swift/JNI 桥接、MusicXML、
+MIDI、Bravura 渲染和播放高亮。由于包内含 Swift 原生库和字体资源，Android
+发布物应使用 AAR，而不是 JAR。
 
 ## 快速开始
 

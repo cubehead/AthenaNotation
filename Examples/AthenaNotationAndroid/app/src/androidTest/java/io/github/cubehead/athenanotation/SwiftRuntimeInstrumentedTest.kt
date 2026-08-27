@@ -19,7 +19,7 @@ class SwiftRuntimeInstrumentedTest {
 
     @Test
     fun musicXMLImportsAndRendersInsideAndroid() {
-        val scene = JSONObject(bridge.renderMusicXMLFixture())
+        val scene = JSONObject(bridge.renderMusicXML(DemoFixtures.musicXML))
         assertFalse(scene.has("error"))
         assertTrue(scene.getJSONArray("commands").length() > 20)
         val roles = scene.getJSONArray("commands").let { commands ->
@@ -34,7 +34,7 @@ class SwiftRuntimeInstrumentedTest {
 
     @Test
     fun midiImportsAndRendersInsideAndroid() {
-        val scene = JSONObject(bridge.renderMIDIFixture())
+        val scene = JSONObject(bridge.renderMIDI(DemoFixtures.midi))
         assertFalse(scene.has("error"))
         assertTrue(scene.getJSONArray("commands").length() > 8)
     }
