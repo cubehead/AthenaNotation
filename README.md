@@ -141,7 +141,11 @@ let sceneJSON = try AndroidRenderBridge().renderScoreJSON(
 
 The renderer owns notation geometry in Swift. Kotlin only executes drawing
 commands with native Compose Canvas, so there is no WebView or JavaScript
-runtime. See [Android Compose integration](Integrations/AndroidCompose/README.md).
+runtime. See [Android Compose integration](Integrations/AndroidCompose/README.md)
+for embedding the canvas, or run the
+[complete Android example](Examples/AthenaNotationAndroid/README.md) to build
+the Swift/JNI bridge and test MusicXML, MIDI, Bravura rendering, and playback
+highlighting on an ARM64 emulator.
 
 ## Quick Start
 

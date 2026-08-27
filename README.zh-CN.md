@@ -138,7 +138,9 @@ let sceneJSON = try AndroidRenderBridge().renderScoreJSON(
 
 乐谱几何计算仍由 Swift 统一负责，Kotlin 只通过原生 Compose Canvas 执行绘制，
 不使用 WebView 或 JavaScript。详见
-[Android Compose 接入说明](Integrations/AndroidCompose/README.md)。
+[Android Compose 接入说明](Integrations/AndroidCompose/README.md)；也可以直接运行
+[完整 Android 示例](Examples/AthenaNotationAndroid/README.md)，在 ARM64 模拟器中
+端到端测试 Swift/JNI 桥接、MusicXML、MIDI、Bravura 渲染和播放高亮。
 
 ## 快速开始
 
