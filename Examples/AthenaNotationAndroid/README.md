@@ -67,8 +67,17 @@ val bravura = ResourcesCompat.getFont(
     io.github.cubehead.athenanotation.bridge.R.font.bravura,
 )!!
 
-AthenaNotationCanvas(sceneJSON, bravura, Modifier.fillMaxSize())
+ScrollableAthenaNotationCanvas(
+    sceneJSON,
+    bravura,
+    systemCount = 1,
+    modifier = Modifier.fillMaxSize(),
+)
 ```
+
+The scrollable composable fits notation to the available width and preserves
+its vertical spacing. A short window scrolls the score instead of scaling the
+staff down.
 
 ## Runtime tests
 

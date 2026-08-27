@@ -10,7 +10,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.core.content.res.ResourcesCompat
-import io.github.cubehead.athenanotation.compose.AthenaNotationCanvas
+import io.github.cubehead.athenanotation.compose.ScrollableAthenaNotationCanvas
 import io.github.cubehead.athenanotation.bridge.R as BridgeR
 
 class MainActivity : ComponentActivity() {
@@ -22,9 +22,10 @@ class MainActivity : ComponentActivity() {
             val bravura = remember { ResourcesCompat.getFont(this, BridgeR.font.bravura)!! }
 
             Box(modifier = Modifier.fillMaxSize()) {
-                AthenaNotationCanvas(
+                ScrollableAthenaNotationCanvas(
                     sceneJSON = sceneJSON,
                     bravuraTypeface = bravura,
+                    systemCount = 1,
                     modifier = Modifier.fillMaxSize().testTag("notation-canvas"),
                 )
                 Text(

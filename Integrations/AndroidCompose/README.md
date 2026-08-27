@@ -52,12 +52,19 @@ Example UI call:
 ```kotlin
 val bravura = ResourcesCompat.getFont(context, R.font.bravura)!!
 
-AthenaNotationCanvas(
+ScrollableAthenaNotationCanvas(
     sceneJSON = renderedSceneJSON,
     bravuraTypeface = bravura,
+    systemCount = 2,
     modifier = Modifier.fillMaxSize(),
 )
 ```
+
+`ScrollableAthenaNotationCanvas` fits the display list to the available width
+without shrinking it to satisfy a short height. It preserves a readable
+minimum height per system and scrolls only the notation viewport when needed.
+Use `AthenaNotationCanvas` directly when the containing UI already owns the
+canvas dimensions.
 
 The JSON boundary is intentional: Kotlin never depends on Swift object memory
 layout, and the display list can be snapshotted for visual regression tests.

@@ -5,10 +5,18 @@ import android.graphics.Paint
 import android.graphics.Path
 import android.graphics.Typeface
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.nativeCanvas
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import org.json.JSONArray
 import org.json.JSONObject
 import kotlin.math.min
@@ -21,10 +29,65 @@ fun AthenaNotationCanvas(
     modifier: Modifier = Modifier,
 ) {
     val scene = remember(sceneJSON) { NotationScene.parse(sceneJSON) }
+    NotationSceneCanvas(
+        scene = scene,
+        bravuraTypeface = bravuraTypeface,
+        modifier = modifier,
+        fitWidth = false,
+    )
+}
+
+/**
+ * A reusable notation viewport that never shrinks the score to satisfy a short height.
+ *
+ * The display list is fitted to the available width and keeps its aspect-ratio height.
+ * If that height (or [minimumSystemHeight] per system) exceeds the viewport, only this
+ * notation area scrolls vertically.
+ */
+@Composable
+fun ScrollableAthenaNotationCanvas(
+    sceneJSON: String,
+    bravuraTypeface: Typeface,
+    systemCount: Int = 1,
+    minimumSystemHeight: Dp = 310.dp,
+    modifier: Modifier = Modifier,
+) {
+    require(systemCount > 0) { "systemCount must be positive" }
+    require(minimumSystemHeight > 0.dp) { "minimumSystemHeight must be positive" }
+    val scene = remember(sceneJSON) { NotationScene.parse(sceneJSON) }
+    val scrollState = rememberScrollState()
+
+    BoxWithConstraints(modifier = modifier) {
+        val aspectHeight = maxWidth * (scene.height / scene.width)
+        val contentHeight = maxOf(
+            aspectHeight,
+            minimumSystemHeight * systemCount.toFloat(),
+        )
+        Column(
+            modifier = Modifier.verticalScroll(scrollState),
+        ) {
+            NotationSceneCanvas(
+                scene = scene,
+                bravuraTypeface = bravuraTypeface,
+                modifier = Modifier.fillMaxWidth().height(contentHeight),
+                fitWidth = true,
+            )
+        }
+    }
+}
+
+@Composable
+private fun NotationSceneCanvas(
+    scene: NotationScene,
+    bravuraTypeface: Typeface,
+    modifier: Modifier,
+    fitWidth: Boolean,
+) {
     Canvas(modifier = modifier) {
-        val scale = min(size.width / scene.width, size.height / scene.height)
+        val widthScale = size.width / scene.width
+        val scale = if (fitWidth) widthScale else min(widthScale, size.height / scene.height)
         val offsetX = (size.width - scene.width * scale) / 2f
-        val offsetY = (size.height - scene.height * scale) / 2f
+        val offsetY = if (fitWidth) 0f else (size.height - scene.height * scale) / 2f
         val canvas = drawContext.canvas.nativeCanvas
         canvas.save()
         canvas.translate(offsetX, offsetY)
@@ -158,4 +221,3 @@ private fun JSONArray.objects(): List<JSONObject> =
 private fun JSONArray.points(): List<Point> = objects().map {
     Point(it.getDouble("x").toFloat(), it.getDouble("y").toFloat())
 }
-

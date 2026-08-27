@@ -64,8 +64,16 @@ val bravura = ResourcesCompat.getFont(
     io.github.cubehead.athenanotation.bridge.R.font.bravura,
 )!!
 
-AthenaNotationCanvas(sceneJSON, bravura, Modifier.fillMaxSize())
+ScrollableAthenaNotationCanvas(
+    sceneJSON,
+    bravura,
+    systemCount = 1,
+    modifier = Modifier.fillMaxSize(),
+)
 ```
+
+该可滚动组件会按可用宽度显示乐谱并保留纵向间距；窗口高度不足时滚动乐谱，
+不会再把五线谱整体缩小。
 
 ## 运行时测试
 
