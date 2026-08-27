@@ -39,15 +39,11 @@ AthenaNotation 提供乐谱语义模型、排版、SwiftUI 渲染、MusicXML/MID
 
 ## 项目边界
 
-AthenaNotation 是开源的乐谱核心，明确不包含：
+AthenaNotation 提供可复用的乐谱语义、雕版排版、原生渲染、已支持格式导入和
+乐谱时间线分析能力。公开模块不绑定具体应用；使用方可以只选择需要的产品，
+组合成自己的工作流。
 
-- 音频引擎和 SoundFont 音色库
-- 实时 MIDI 设备管理和练琴打分
-- OVE 及其他可选或专有格式导入
-- LED 瀑布流 UI 和 ESP32 通讯
-- 完整产品的业务 UI 与服务
-
-上述功能可以依赖 AthenaNotation，但 AthenaNotation 不能反向依赖它们。
+所有依赖均朝向乐谱语义核心，使模型和排版引擎可以在支持的平台之间保持可移植。
 详细说明见[架构文档](Documentation/Architecture.md)。
 
 ## 环境要求

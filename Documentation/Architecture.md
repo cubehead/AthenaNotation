@@ -28,8 +28,8 @@ spanners and voltas. Layout depends only on the semantic model.
 ## AthenaNotationRenderApple
 
 Renders the layout with SwiftUI Canvas, CoreText and the bundled Bravura SMuFL
-font. Highlighted event IDs are input state; playback engines remain outside
-this package.
+font. Highlighted event IDs are accepted as rendering state through the public
+view API.
 
 ## AthenaNotationRenderAndroid
 
@@ -43,8 +43,7 @@ the Swift product independently cross-compilable.
 ## AthenaScoreAnalysis
 
 Builds tempo, count-in, playback, expression, pedal and active-note timelines.
-It analyzes score state but does not play audio or communicate with MIDI
-hardware.
+The output is deterministic score data that clients can query by musical time.
 
 ## Importers
 
@@ -52,15 +51,13 @@ hardware.
 `NotationScore` model. Unknown or unsupported data should produce diagnostics
 without leaking format-specific types into the core.
 
-## Extension boundary
+## Dependency boundary
 
-The following deliberately stay outside this repository:
+The modules in this repository form a reusable library layer. Applications and
+integrations consume its public products through their documented APIs, while
+the semantic core and layout engine remain independent of application targets
+and platform services.
 
-- audio engines and SoundFont banks
-- live MIDI endpoint management and practice scoring
-- OVE or other optional/proprietary importers
-- LED waterfall UI and ESP32 communication
-- complete product UI, accounts, libraries and commerce
-
-Extensions may depend on AthenaNotation. AthenaNotation must never depend on an
-extension.
+Additional integrations can live in separate packages that depend on
+AthenaNotation. Dependencies must not point from AthenaNotation back into a
+client or integration package.

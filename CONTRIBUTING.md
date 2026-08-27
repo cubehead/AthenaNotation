@@ -5,8 +5,8 @@ Thanks for helping improve AthenaNotation.
 ## Before opening a change
 
 1. Open an issue for substantial API or engraving changes.
-2. Keep the open-source boundary intact: do not add audio playback, OVE,
-   practice scoring, LED hardware communication, or product-only UI.
+2. Keep changes within the documented public modules and preserve the one-way
+   dependency structure described in `Documentation/Architecture.md`.
 3. Add focused tests for semantic, import, layout, or rendering behavior.
 4. Preserve exact rational timing; avoid converting score time to floating
    point inside the model and layout layers.

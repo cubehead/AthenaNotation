@@ -40,16 +40,14 @@ WebView, JavaScript renderer, or third-party MIDI runtime.
 
 ## Scope
 
-AthenaNotation is the open-source notation core. It intentionally excludes:
+AthenaNotation provides reusable building blocks for score semantics,
+engraving, native rendering, supported file import, and score-timeline
+analysis. Its public modules are application-neutral: clients can select only
+the products they need and compose them into their own workflows.
 
-- audio engines and SoundFont banks
-- live MIDI device management and practice scoring
-- OVE and other optional or proprietary importers
-- LED waterfall UI and ESP32 communication
-- product-specific application UI and services
-
-Those features belong in packages that depend on AthenaNotation, never the
-other way around. See [Architecture](Documentation/Architecture.md).
+Dependencies point inward toward the semantic core, keeping the model and
+layout engine portable across supported platforms. See
+[Architecture](Documentation/Architecture.md).
 
 ## Requirements
 
