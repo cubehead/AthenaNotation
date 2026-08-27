@@ -1,14 +1,22 @@
-# AthenaNotation
+<p align="center">
+  <img src="Assets/Brand/athena-notation-mark.png" width="168" alt="AthenaNotation 标志">
+</p>
 
-[English](README.md) | [简体中文](README.zh-CN.md)
+<h1 align="center">AthenaNotation</h1>
+
+<p align="center">
+  面向 iPadOS、macOS 和 Android 的原生 Swift 乐谱引擎。
+</p>
+
+<p align="center">
+  <a href="README.md">English</a> · <a href="README.zh-CN.md">简体中文</a>
+</p>
 
 [![CI](https://github.com/cubehead/AthenaNotation/actions/workflows/ci.yml/badge.svg)](https://github.com/cubehead/AthenaNotation/actions/workflows/ci.yml)
 [![Swift 6.0](https://img.shields.io/badge/Swift-6.0-F05138?logo=swift&logoColor=white)](https://www.swift.org/)
 [![支持平台](https://img.shields.io/badge/platforms-iPadOS%20%7C%20macOS%20%7C%20Android-lightgrey)](Package.swift)
 [![CocoaPods](https://img.shields.io/badge/CocoaPods-GitHub%20source-EE3322?logo=cocoapods&logoColor=white)](AthenaNotation.podspec)
 [![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-
-面向 iPadOS、macOS 和 Android 的原生 Swift 乐谱引擎。
 
 AthenaNotation 提供乐谱语义模型、排版、SwiftUI 渲染、MusicXML/MIDI
 导入和乐谱时间线分析，不依赖 WebView、JavaScript 渲染器或第三方 MIDI
@@ -242,6 +250,12 @@ Issue 讨论。
 
 Git 标签、GitHub Releases、Swift Package Manager 和基于 Git 的 CocoaPods
 发布步骤见 [RELEASING.md](RELEASING.md)。
+
+## 品牌资源
+
+透明背景的 AthenaNotation 标志位于
+[`Assets/Brand`](Assets/Brand/README.md)。图形融合了抽象雅典娜头盔、音符与
+五线谱；品牌资源与项目代码采用相同的 MIT 许可。
 
 ## 开源协议
 

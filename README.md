@@ -1,14 +1,22 @@
-# AthenaNotation
+<p align="center">
+  <img src="Assets/Brand/athena-notation-mark.png" width="168" alt="AthenaNotation logo">
+</p>
 
-[English](README.md) | [简体中文](README.zh-CN.md)
+<h1 align="center">AthenaNotation</h1>
+
+<p align="center">
+  A native Swift music-notation engine for iPadOS, macOS, and Android.
+</p>
+
+<p align="center">
+  <a href="README.md">English</a> · <a href="README.zh-CN.md">简体中文</a>
+</p>
 
 [![CI](https://github.com/cubehead/AthenaNotation/actions/workflows/ci.yml/badge.svg)](https://github.com/cubehead/AthenaNotation/actions/workflows/ci.yml)
 [![Swift 6.0](https://img.shields.io/badge/Swift-6.0-F05138?logo=swift&logoColor=white)](https://www.swift.org/)
 [![Platforms](https://img.shields.io/badge/platforms-iPadOS%20%7C%20macOS%20%7C%20Android-lightgrey)](Package.swift)
 [![CocoaPods](https://img.shields.io/badge/CocoaPods-GitHub%20source-EE3322?logo=cocoapods&logoColor=white)](AthenaNotation.podspec)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-
-A native Swift music-notation engine for iPadOS, macOS, and Android.
 
 AthenaNotation provides a semantic score model, engraving layout, SwiftUI
 renderer, MusicXML and MIDI importers, and score-timeline analysis—without a
@@ -247,6 +255,13 @@ Read [CONTRIBUTING.md](CONTRIBUTING.md) and the
 
 Maintainer instructions for Git tags, GitHub Releases, Swift Package Manager,
 and Git-based CocoaPods distribution are in [RELEASING.md](RELEASING.md).
+
+## Brand assets
+
+The transparent AthenaNotation mark is available in
+[`Assets/Brand`](Assets/Brand/README.md). It combines an abstract Athena helmet,
+a musical note, and a five-line staff. Brand assets are distributed under the
+same MIT license as the project.
 
 ## License
 
