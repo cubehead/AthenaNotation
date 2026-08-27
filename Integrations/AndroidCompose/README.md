@@ -11,6 +11,29 @@ MusicXML / MIDI -> NotationScore -> AndroidScoreRenderer -> JSON display list
                                                         -> Compose Canvas
 ```
 
+## Toolchain
+
+The repository pins Swift `6.3.3` in `.swift-version`. Install the matching
+swift.org toolchain, `swift-6.3.3-RELEASE_android` SDK, and Android NDK r27d or
+later by following the official
+[Swift SDK for Android guide](https://www.swift.org/documentation/articles/swift-sdk-for-android-getting-started.html).
+
+Verify the renderer for a physical ARM64 device and an x86_64 emulator:
+
+```sh
+swift sdk list
+swift build \
+  --swift-sdk aarch64-unknown-linux-android28 \
+  --target AthenaNotationRenderAndroid
+swift build \
+  --swift-sdk x86_64-unknown-linux-android28 \
+  --target AthenaNotationRenderAndroid
+```
+
+The MusicXML, MIDI, and score-analysis products can be checked the same way by
+replacing the target name with `AthenaMusicXML`, `AthenaMIDI`, or
+`AthenaScoreAnalysis`.
+
 1. Cross-compile the `AthenaNotationRenderAndroid` Swift product with the
    official Swift SDK for Android.
 2. Generate a Kotlin/Java binding for `AndroidRenderBridge` with `swift-java`,
@@ -36,4 +59,3 @@ The JSON boundary is intentional: Kotlin never depends on Swift object memory
 layout, and the display list can be snapshotted for visual regression tests.
 `role` and `eventID` fields also preserve hit-testing, playback highlighting,
 and future accessibility metadata.
-

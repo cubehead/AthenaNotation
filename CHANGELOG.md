@@ -5,6 +5,8 @@
 - Add the `AthenaNotationRenderAndroid` Swift product with a Codable display
   list, string-only `AndroidRenderBridge`, bundled Bravura font, Compose Canvas
   adapter, and rendering tests.
+- Pin Swift 6.3.3 for reproducible Android SDK cross-compilation and document
+  verified ARM64-device and x86_64-emulator build commands.
 
 All notable changes follow Semantic Versioning.
 
