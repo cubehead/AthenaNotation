@@ -214,6 +214,8 @@ public struct NativeScorePreview: View {
             nextSystemOnset: layouts.indices.contains(systemIndex + 1)
               ? layouts[systemIndex + 1].contexts.first?.onset : nil,
             firstStaffTop: firstStaffTop,
+            topStaff: staves[0],
+            stemOverrides: stems,
             notationStart: notationStart,
             endX: size.width - horizontalPadding,
             lineSpacing: lineSpacing,
@@ -985,6 +987,8 @@ public struct NativeScorePreview: View {
     layout: HorizontalLayout,
     nextSystemOnset: Rational?,
     firstStaffTop: Double,
+    topStaff: NotationStaff,
+    stemOverrides: [NotationEventID: BeamStemOverride],
     notationStart: Double,
     endX: Double,
     lineSpacing: Double,
@@ -1003,12 +1007,34 @@ public struct NativeScorePreview: View {
       return notationStart + (layout.contexts[index - 1].x + layout.contexts[index].x) / 2
     }
 
-    for (level, segment) in segments.enumerated() {
+    var occupiedLevelEnds: [Double] = []
+    for segment in segments {
       let startX =
         segment.startsHere ? boundaryX(for: segment.volta.startOnset) : notationStart - 28
       let finishX = segment.endsHere ? boundaryX(for: segment.volta.endOnset) : endX
       guard finishX > startX else { continue }
-      let y = firstStaffTop - lineSpacing * 9 - Double(level) * 24
+
+      let level: Int
+      if let reusableLevel = occupiedLevelEnds.firstIndex(where: { $0 <= startX + 0.5 }) {
+        level = reusableLevel
+        occupiedLevelEnds[level] = finishX
+      } else {
+        level = occupiedLevelEnds.count
+        occupiedLevelEnds.append(finishX)
+      }
+
+      let defaultY = firstStaffTop - lineSpacing * 2.5 - Double(level) * 24
+      let contentTop = topContentY(
+        in: layout,
+        staff: topStaff,
+        stemOverrides: stemOverrides,
+        notationStart: notationStart,
+        startX: startX,
+        finishX: finishX,
+        staffTop: firstStaffTop,
+        lineSpacing: lineSpacing
+      )
+      let y = min(defaultY, (contentTop ?? defaultY) - lineSpacing * 1.25)
       var bracket = Path()
       bracket.move(to: CGPoint(x: startX, y: y + (segment.startsHere ? 14 : 0)))
       bracket.addLine(to: CGPoint(x: startX, y: y))
@@ -1026,6 +1052,48 @@ public struct NativeScorePreview: View {
         context.draw(text, at: CGPoint(x: startX + 10, y: y + 10), anchor: .leading)
       }
     }
+  }
+
+  private func topContentY(
+    in layout: HorizontalLayout,
+    staff: NotationStaff,
+    stemOverrides: [NotationEventID: BeamStemOverride],
+    notationStart: Double,
+    startX: Double,
+    finishX: Double,
+    staffTop: Double,
+    lineSpacing: Double
+  ) -> Double? {
+    layout.events.compactMap { positioned -> Double? in
+      let event = positioned.input.event
+      let x = notationStart + positioned.x
+      guard event.staffID == staff.id, startX...finishX ~= x,
+        case .notes(let pitches) = event.content, !pitches.isEmpty
+      else { return nil }
+
+      let positions = pitches.map { staffPosition(for: $0, clef: staff.clef) }
+      let noteYs = positions.map {
+        staffTop + lineSpacing * 4 - Double($0) * lineSpacing / 2
+      }
+      guard let highestNoteY = noteYs.min() else { return nil }
+
+      var top = highestNoteY - lineSpacing * 0.55
+      if event.engravingDuration < .one {
+        let automaticStemUp =
+          Double(positions.reduce(0, +)) / Double(positions.count) < 4
+        let stemUp =
+          stemOverrides[event.id]?.isUp
+          ?? voiceStemDirections[positioned.input.voiceID]
+          ?? automaticStemUp
+        if stemUp {
+          let stemEndY =
+            stemOverrides[event.id]?.endY
+            ?? highestNoteY - lineSpacing * 3.5
+          top = min(top, stemEndY)
+        }
+      }
+      return top
+    }.min()
   }
 
   private func drawTuplets(
