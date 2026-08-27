@@ -5,7 +5,7 @@
 [![CI](https://github.com/cubehead/AthenaNotation/actions/workflows/ci.yml/badge.svg)](https://github.com/cubehead/AthenaNotation/actions/workflows/ci.yml)
 [![Swift 6.0](https://img.shields.io/badge/Swift-6.0-F05138?logo=swift&logoColor=white)](https://www.swift.org/)
 [![支持平台](https://img.shields.io/badge/platforms-iPadOS%2017%2B%20%7C%20macOS%2015%2B-lightgrey)](Package.swift)
-[![CocoaPods](https://img.shields.io/cocoapods/v/AthenaNotation.svg)](https://cocoapods.org/pods/AthenaNotation)
+[![CocoaPods](https://img.shields.io/badge/CocoaPods-GitHub%20source-EE3322?logo=cocoapods&logoColor=white)](AthenaNotation.podspec)
 [![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 面向 iPadOS 和 macOS 的原生 Swift 乐谱引擎。
@@ -89,20 +89,29 @@ platform :ios, '17.0'
 use_frameworks!
 
 target 'YourApp' do
-  pod 'AthenaNotation', '~> 0.1'
+  pod 'AthenaNotation',
+      :git => 'https://github.com/cubehead/AthenaNotation.git',
+      :tag => '0.1.0'
 end
 ```
 
-使用本地开发版本：
+保存 Podfile 后运行 `pod install`。这种方式直接从 GitHub 安装固定版本，
+不要求 AthenaNotation 出现在 CocoaPods 公共 Specs 索引中。
+
+如果需要跟踪最新的 `main` 分支：
+
+```ruby
+pod 'AthenaNotation',
+    :git => 'https://github.com/cubehead/AthenaNotation.git',
+    :branch => 'main'
+```
+
+正式 App 建议使用版本标签，保证构建可重复；分支形式更适合开发和早期体验。
+
+使用本地检出版本：
 
 ```ruby
 pod 'AthenaNotation', :path => '../AthenaNotation'
-```
-
-然后运行：
-
-```sh
-pod install
 ```
 
 Swift Package Manager 会保留上面的细粒度模块；CocoaPods 则会把全部开源核心
@@ -201,7 +210,7 @@ Issue 讨论。
 
 ## 发布
 
-Git 标签、GitHub Releases、Swift Package Manager 和 CocoaPods Trunk 的维护者
+Git 标签、GitHub Releases、Swift Package Manager 和基于 Git 的 CocoaPods
 发布步骤见 [RELEASING.md](RELEASING.md)。
 
 ## 开源协议

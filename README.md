@@ -5,7 +5,7 @@
 [![CI](https://github.com/cubehead/AthenaNotation/actions/workflows/ci.yml/badge.svg)](https://github.com/cubehead/AthenaNotation/actions/workflows/ci.yml)
 [![Swift 6.0](https://img.shields.io/badge/Swift-6.0-F05138?logo=swift&logoColor=white)](https://www.swift.org/)
 [![Platforms](https://img.shields.io/badge/platforms-iPadOS%2017%2B%20%7C%20macOS%2015%2B-lightgrey)](Package.swift)
-[![CocoaPods](https://img.shields.io/cocoapods/v/AthenaNotation.svg)](https://cocoapods.org/pods/AthenaNotation)
+[![CocoaPods](https://img.shields.io/badge/CocoaPods-GitHub%20source-EE3322?logo=cocoapods&logoColor=white)](AthenaNotation.podspec)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 A native Swift music-notation engine for iPadOS and macOS.
@@ -90,20 +90,31 @@ platform :ios, '17.0'
 use_frameworks!
 
 target 'YourApp' do
-  pod 'AthenaNotation', '~> 0.1'
+  pod 'AthenaNotation',
+      :git => 'https://github.com/cubehead/AthenaNotation.git',
+      :tag => '0.1.0'
 end
 ```
 
-For local development:
+Run `pod install` after saving the Podfile. This installs the checked release
+directly from GitHub and does not require AthenaNotation to exist in the public
+CocoaPods Specs index.
+
+To follow the latest `main` branch instead:
+
+```ruby
+pod 'AthenaNotation',
+    :git => 'https://github.com/cubehead/AthenaNotation.git',
+    :branch => 'main'
+```
+
+Use a version tag for reproducible application builds. The branch form is
+intended for development and early evaluation.
+
+For a local checkout:
 
 ```ruby
 pod 'AthenaNotation', :path => '../AthenaNotation'
-```
-
-Then run:
-
-```sh
-pod install
 ```
 
 Swift Package Manager exposes the focused modules listed above. CocoaPods
@@ -204,7 +215,7 @@ Read [CONTRIBUTING.md](CONTRIBUTING.md) and the
 ## Releasing
 
 Maintainer instructions for Git tags, GitHub Releases, Swift Package Manager,
-and CocoaPods Trunk are in [RELEASING.md](RELEASING.md).
+and Git-based CocoaPods distribution are in [RELEASING.md](RELEASING.md).
 
 ## License
 
