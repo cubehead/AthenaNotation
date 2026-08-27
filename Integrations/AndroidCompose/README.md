@@ -13,10 +13,14 @@ MusicXML / MIDI -> NotationScore -> AndroidScoreRenderer -> JSON display list
 
 ## Toolchain
 
-The repository pins Swift `6.3.3` in `.swift-version`. Install the matching
-swift.org toolchain, `swift-6.3.3-RELEASE_android` SDK, and Android NDK r27d or
-later by following the official
+Install the matching swift.org Swift `6.3.3` toolchain,
+`swift-6.3.3-RELEASE_android` SDK, and Android NDK r27d or later by following the official
 [Swift SDK for Android guide](https://www.swift.org/documentation/articles/swift-sdk-for-android-getting-started.html).
+
+Do not add a `.swift-version` file to this repository: CocoaPods interprets it
+as the Swift *language mode* and requires it to match the podspec's `6.0`, while
+the Android SDK requires a matching `6.3.3` *toolchain release*. Select 6.3.3
+globally with Swiftly or in the shell used for Android builds instead.
 
 Verify the renderer for a physical ARM64 device and an x86_64 emulator:
 
