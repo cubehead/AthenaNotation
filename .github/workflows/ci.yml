@@ -8,7 +8,7 @@ jobs:
   swift:
     runs-on: macos-15
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Select Xcode
         run: sudo xcode-select -s /Applications/Xcode_16.2.app
       - name: Test
@@ -19,7 +19,7 @@ jobs:
   cocoapods:
     runs-on: macos-15
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Install CocoaPods
         run: gem install cocoapods --no-document
       - name: Lint Podspec
