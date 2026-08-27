@@ -6,6 +6,7 @@ import android.graphics.Path
 import android.graphics.Rect
 import android.graphics.Typeface
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -22,12 +23,38 @@ import org.json.JSONArray
 import org.json.JSONObject
 import kotlin.math.min
 
+/** Semantic colors used when executing an AthenaNotation display list. */
+data class AthenaNotationColors(
+    val background: Int,
+    val foreground: Int,
+    val playbackHighlight: Int,
+) {
+    companion object {
+        val Light = AthenaNotationColors(
+            background = Color.WHITE,
+            foreground = Color.BLACK,
+            playbackHighlight = Color.argb(51, 0, 122, 255),
+        )
+
+        val Dark = AthenaNotationColors(
+            background = Color.rgb(14, 18, 26),
+            foreground = Color.rgb(232, 237, 245),
+            playbackHighlight = Color.argb(77, 59, 130, 246),
+        )
+
+        fun forDarkTheme(darkTheme: Boolean): AthenaNotationColors =
+            if (darkTheme) Dark else Light
+    }
+}
+
 /** Executes the JSON display list produced by AndroidScoreRenderer. */
 @Composable
 fun AthenaNotationCanvas(
     sceneJSON: String,
     bravuraTypeface: Typeface,
     modifier: Modifier = Modifier,
+    darkTheme: Boolean = isSystemInDarkTheme(),
+    colors: AthenaNotationColors = AthenaNotationColors.forDarkTheme(darkTheme),
 ) {
     val scene = remember(sceneJSON) { NotationScene.parse(sceneJSON) }
     NotationSceneCanvas(
@@ -35,6 +62,7 @@ fun AthenaNotationCanvas(
         bravuraTypeface = bravuraTypeface,
         modifier = modifier,
         fitWidth = false,
+        colors = colors,
     )
 }
 
@@ -52,6 +80,8 @@ fun ScrollableAthenaNotationCanvas(
     systemCount: Int = 1,
     minimumSystemHeight: Dp = 310.dp,
     modifier: Modifier = Modifier,
+    darkTheme: Boolean = isSystemInDarkTheme(),
+    colors: AthenaNotationColors = AthenaNotationColors.forDarkTheme(darkTheme),
 ) {
     require(systemCount > 0) { "systemCount must be positive" }
     require(minimumSystemHeight > 0.dp) { "minimumSystemHeight must be positive" }
@@ -72,6 +102,7 @@ fun ScrollableAthenaNotationCanvas(
                 bravuraTypeface = bravuraTypeface,
                 modifier = Modifier.fillMaxWidth().height(contentHeight),
                 fitWidth = true,
+                colors = colors,
             )
         }
     }
@@ -83,6 +114,7 @@ private fun NotationSceneCanvas(
     bravuraTypeface: Typeface,
     modifier: Modifier,
     fitWidth: Boolean,
+    colors: AthenaNotationColors,
 ) {
     Canvas(modifier = modifier) {
         val widthScale = size.width / scene.width
@@ -96,7 +128,7 @@ private fun NotationSceneCanvas(
 
         scene.commands.forEach { command ->
             val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-                color = Color.parseColor(command.color)
+                color = command.resolvedColor(colors)
                 style = if (command.fill) Paint.Style.FILL else Paint.Style.STROKE
                 strokeWidth = command.lineWidth
                 strokeCap = if (command.role == "stem") Paint.Cap.BUTT else Paint.Cap.ROUND
@@ -148,6 +180,13 @@ private fun NotationSceneCanvas(
         }
         canvas.restore()
     }
+}
+
+private fun DrawCommand.resolvedColor(colors: AthenaNotationColors): Int = when {
+    role == "background" -> colors.background
+    role == "playbackHighlight" -> colors.playbackHighlight
+    color.equals("#FF000000", ignoreCase = true) -> colors.foreground
+    else -> Color.parseColor(color)
 }
 
 private data class Point(val x: Float, val y: Float)

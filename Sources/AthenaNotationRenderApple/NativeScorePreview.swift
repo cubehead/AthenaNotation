@@ -9,36 +9,44 @@ import SwiftUI
 /// Native Apple renderer for the current VexFlow-to-Swift port subset.
 @available(iOS 17.0, macOS 15.0, *)
 public struct NativeScorePreview: View {
+  @Environment(\.colorScheme) private var colorScheme
+
   private let score: NotationScore
   private let playbackEventIDs: Set<NotationEventID>
   private let preferredSystemCount: Int
+  private let theme: NativeScoreTheme?
 
   public init(
     score: NotationScore,
     playbackEventID: NotationEventID? = nil,
-    preferredSystemCount: Int = 1
+    preferredSystemCount: Int = 1,
+    theme: NativeScoreTheme? = nil
   ) {
     precondition(preferredSystemCount > 0)
     self.score = score
     playbackEventIDs = playbackEventID.map { [$0] } ?? []
     self.preferredSystemCount = preferredSystemCount
+    self.theme = theme
   }
 
   public init(
     score: NotationScore,
     playbackEventIDs: Set<NotationEventID>,
-    preferredSystemCount: Int = 1
+    preferredSystemCount: Int = 1,
+    theme: NativeScoreTheme? = nil
   ) {
     precondition(preferredSystemCount > 0)
     self.score = score
     self.playbackEventIDs = playbackEventIDs
     self.preferredSystemCount = preferredSystemCount
+    self.theme = theme
   }
 
   public init(
     voices: [NotationVoice],
     playbackEventID: NotationEventID? = nil,
-    preferredSystemCount: Int = 1
+    preferredSystemCount: Int = 1,
+    theme: NativeScoreTheme? = nil
   ) {
     self.init(
       score: NotationScore(
@@ -46,7 +54,8 @@ public struct NativeScorePreview: View {
         voices: voices
       ),
       playbackEventID: playbackEventID,
-      preferredSystemCount: preferredSystemCount
+      preferredSystemCount: preferredSystemCount,
+      theme: theme
     )
   }
 
@@ -155,7 +164,7 @@ public struct NativeScorePreview: View {
                 width: 6,
                 height: lastStaffTop + lineSpacing * 4 - firstStaffTop + 44
               )
-              context.fill(Path(cursor), with: .color(.blue.opacity(0.2)))
+              context.fill(Path(cursor), with: .color(resolvedTheme.playbackHighlight))
             }
 
             switch event.content {
@@ -223,8 +232,12 @@ public struct NativeScorePreview: View {
           )
         }
       }
-      .background(Color.white)
+      .background(resolvedTheme.background)
     }
+  }
+
+  private var resolvedTheme: NativeScoreTheme {
+    theme ?? (colorScheme == .dark ? .dark : .light)
   }
 
   private var measureDuration: Rational {
@@ -288,7 +301,7 @@ public struct NativeScorePreview: View {
       var path = Path()
       path.move(to: CGPoint(x: startX, y: y))
       path.addLine(to: CGPoint(x: endX, y: y))
-      context.stroke(path, with: .color(.black), lineWidth: 1)
+      context.stroke(path, with: .color(resolvedTheme.foreground), lineWidth: 1)
     }
   }
 
@@ -310,7 +323,7 @@ public struct NativeScorePreview: View {
       var line = Path()
       line.move(to: CGPoint(x: x, y: top))
       line.addLine(to: CGPoint(x: x, y: bottom))
-      context.stroke(line, with: .color(.black), lineWidth: width)
+      context.stroke(line, with: .color(resolvedTheme.foreground), lineWidth: width)
     }
 
     func dots(at x: Double) {
@@ -322,7 +335,7 @@ public struct NativeScorePreview: View {
             width: 4.5,
             height: 4.5
           )
-          context.fill(Path(ellipseIn: dot), with: .color(.black))
+          context.fill(Path(ellipseIn: dot), with: .color(resolvedTheme.foreground))
         }
       }
     }
@@ -643,7 +656,7 @@ public struct NativeScorePreview: View {
     var stem = Path()
     stem.move(to: CGPoint(x: x, y: startY))
     stem.addLine(to: CGPoint(x: x, y: endY))
-    context.stroke(stem, with: .color(.black), lineWidth: width)
+    context.stroke(stem, with: .color(resolvedTheme.foreground), lineWidth: width)
     return StemGeometry(x: x, endY: endY, isUp: isUp, width: width)
   }
 
@@ -801,7 +814,7 @@ public struct NativeScorePreview: View {
         path.addLine(to: CGPoint(x: segment.endX, y: endY + signedThickness))
         path.addLine(to: CGPoint(x: segment.startX, y: startY + signedThickness))
         path.closeSubpath()
-        context.fill(path, with: .color(.black))
+        context.fill(path, with: .color(resolvedTheme.foreground))
       }
     }
   }
@@ -917,7 +930,7 @@ public struct NativeScorePreview: View {
           hairpin.addLine(to: CGPoint(x: middleX, y: start.y + halfHeight))
           hairpin.addLine(to: end)
         }
-        context.stroke(hairpin, with: .color(.black), lineWidth: 1.2)
+        context.stroke(hairpin, with: .color(resolvedTheme.foreground), lineWidth: 1.2)
         continue
       }
 
@@ -927,12 +940,12 @@ public struct NativeScorePreview: View {
         pedalLine.move(to: CGPoint(x: start.x + labelOffset, y: start.y))
         pedalLine.addLine(to: end)
         pedalLine.addLine(to: CGPoint(x: end.x, y: end.y - 8))
-        context.stroke(pedalLine, with: .color(.black), lineWidth: 1.1)
+        context.stroke(pedalLine, with: .color(resolvedTheme.foreground), lineWidth: 1.1)
         if labelOffset > 0 {
           let label = Text("Ped.")
             .font(.system(size: 14, weight: .semibold, design: .serif))
             .italic()
-            .foregroundColor(.black)
+            .foregroundColor(resolvedTheme.foreground)
           context.draw(label, at: CGPoint(x: start.x + 9, y: start.y - 1), anchor: .center)
         }
         continue
@@ -976,7 +989,7 @@ public struct NativeScorePreview: View {
       )
       context.stroke(
         curve,
-        with: .color(.black),
+        with: .color(resolvedTheme.foreground),
         lineWidth: segment.spanner.kind == .tie ? 1.5 : 1.3
       )
     }
@@ -1042,13 +1055,13 @@ public struct NativeScorePreview: View {
       if segment.endsHere, segment.volta.hasEndHook {
         bracket.addLine(to: CGPoint(x: finishX, y: y + 14))
       }
-      context.stroke(bracket, with: .color(.black), lineWidth: 1.5)
+      context.stroke(bracket, with: .color(resolvedTheme.foreground), lineWidth: 1.5)
 
       if segment.startsHere {
         let label = segment.volta.numbers.map(String.init).joined(separator: ",") + "."
         let text = Text(label)
           .font(.system(size: 14, weight: .semibold, design: .serif))
-          .foregroundColor(.black)
+          .foregroundColor(resolvedTheme.foreground)
         context.draw(text, at: CGPoint(x: startX + 10, y: y + 10), anchor: .leading)
       }
     }
@@ -1165,7 +1178,7 @@ public struct NativeScorePreview: View {
         bracket.move(to: CGPoint(x: centerX + gap / 2, y: y))
         bracket.addLine(to: CGPoint(x: x2, y: y))
         bracket.addLine(to: CGPoint(x: x2, y: y + hook))
-        context.stroke(bracket, with: .color(.black), lineWidth: 1.2)
+        context.stroke(bracket, with: .color(resolvedTheme.foreground), lineWidth: 1.2)
       }
 
       if let glyph = SMuFLGlyph.timeSignatureDigit(segment.tuplet.actualCount) {
@@ -1173,7 +1186,7 @@ public struct NativeScorePreview: View {
       } else {
         let text = Text(String(segment.tuplet.actualCount))
           .font(.system(size: 12, weight: .semibold, design: .serif))
-          .foregroundColor(.black)
+          .foregroundColor(resolvedTheme.foreground)
         context.draw(text, at: CGPoint(x: centerX, y: y), anchor: .center)
       }
     }
@@ -1252,7 +1265,7 @@ public struct NativeScorePreview: View {
       var ledger = Path()
       ledger.move(to: CGPoint(x: x - 10, y: y))
       ledger.addLine(to: CGPoint(x: x + 10, y: y))
-      context.stroke(ledger, with: .color(.black), lineWidth: 1)
+      context.stroke(ledger, with: .color(resolvedTheme.foreground), lineWidth: 1)
     }
   }
 
@@ -1281,20 +1294,20 @@ public struct NativeScorePreview: View {
       case .fingering(let finger):
         let text = Text(String(finger.rawValue))
           .font(.system(size: 13, weight: .semibold, design: .serif))
-          .foregroundColor(.black)
+          .foregroundColor(resolvedTheme.foreground)
         context.draw(text, at: CGPoint(x: noteX, y: y), anchor: .center)
       case .smuflGlyph(let name):
         if let glyph = SMuFLGlyph.named(name) {
           drawGlyph(glyph, size: 24, at: CGPoint(x: noteX, y: y), in: &context)
         }
       case .text(let value), .technique(let value):
-        let text = Text(value).font(.system(size: 12)).foregroundColor(.black)
+        let text = Text(value).font(.system(size: 12)).foregroundColor(resolvedTheme.foreground)
         context.draw(text, at: CGPoint(x: noteX, y: y), anchor: .center)
       case .dynamic(let label, _):
         let text = Text(label)
           .font(.system(size: 16, weight: .semibold, design: .serif))
           .italic()
-          .foregroundColor(.black)
+          .foregroundColor(resolvedTheme.foreground)
         context.draw(text, at: CGPoint(x: noteX, y: y), anchor: .center)
       }
     }
@@ -1328,7 +1341,7 @@ public struct NativeScorePreview: View {
       ty: point.y + metrics.bounds.midY
     )
     let path = Path(glyphPath).applying(transform)
-    context.fill(path, with: .color(.black))
+    context.fill(path, with: .color(resolvedTheme.foreground))
   }
 
   private func staffPosition(for pitch: NotatedPitch, clef: StaffClef) -> Int {

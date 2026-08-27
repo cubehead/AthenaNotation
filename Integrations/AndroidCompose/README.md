@@ -60,6 +60,17 @@ ScrollableAthenaNotationCanvas(
 )
 ```
 
+The composables follow Android's system dark theme by default. Pin a palette
+with `darkTheme = true` or `darkTheme = false`, or pass custom semantic colors:
+
+```kotlin
+ScrollableAthenaNotationCanvas(
+    sceneJSON = renderedSceneJSON,
+    bravuraTypeface = bravura,
+    colors = AthenaNotationColors.Dark,
+)
+```
+
 `ScrollableAthenaNotationCanvas` fits the display list to the available width
 without shrinking it to satisfy a short height. It preserves a readable
 minimum height per system and scrolls only the notation viewport when needed.

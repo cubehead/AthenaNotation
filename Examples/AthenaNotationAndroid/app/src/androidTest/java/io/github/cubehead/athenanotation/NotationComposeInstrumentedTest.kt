@@ -1,6 +1,7 @@
 package io.github.cubehead.athenanotation
 
 import android.graphics.Bitmap
+import android.content.res.Configuration
 import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.graphics.toPixelMap
 import androidx.compose.ui.test.captureToImage
@@ -26,18 +27,28 @@ class NotationComposeInstrumentedTest {
         val image = compose.onNodeWithTag("notation-canvas").captureToImage()
         val pixels = image.toPixelMap()
         var darkPixels = 0
+        var lightPixels = 0
         var bluePixels = 0
         for (y in 0 until pixels.height) {
             for (x in 0 until pixels.width) {
                 val color = pixels[x, y]
                 if (color.red < 0.35f && color.green < 0.35f && color.blue < 0.35f) darkPixels++
+                if (color.red > 0.75f && color.green > 0.75f && color.blue > 0.75f) lightPixels++
                 if (color.blue > color.red + 0.08f && color.blue > color.green + 0.04f) bluePixels++
             }
         }
-        assertTrue("Expected engraved black pixels", darkPixels > 1_000)
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val isDarkTheme = context.resources.configuration.uiMode and
+            Configuration.UI_MODE_NIGHT_MASK == Configuration.UI_MODE_NIGHT_YES
+        if (isDarkTheme) {
+            assertTrue("Expected dark notation background", darkPixels > 10_000)
+            assertTrue("Expected light engraved pixels", lightPixels > 1_000)
+        } else {
+            assertTrue("Expected engraved black pixels", darkPixels > 1_000)
+            assertTrue("Expected light notation background", lightPixels > 10_000)
+        }
         assertTrue("Expected playback highlight pixels", bluePixels > 50)
 
-        val context = InstrumentationRegistry.getInstrumentation().targetContext
         val capture = File(context.getExternalFilesDir(null), "athena-notation.png")
         FileOutputStream(capture).use { output ->
             image.asAndroidBitmap().compress(Bitmap.CompressFormat.PNG, 100, output)

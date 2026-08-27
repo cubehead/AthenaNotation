@@ -147,6 +147,8 @@ let sceneJSON = try AndroidRenderBridge().renderScoreJSON(
 构建可分发 AAR，并在 Android 9～15 上端到端测试 Swift/JNI 桥接、MusicXML、
 MIDI、Bravura 渲染和播放高亮。由于包内含 Swift 原生库和字体资源，Android
 发布物应使用 AAR，而不是 JAR。
+Compose 适配器默认跟随 Android 系统的浅色/暗色模式，也可通过
+`AthenaNotationColors` 固定或自定义谱面配色。
 
 ## 快速开始
 
@@ -172,6 +174,10 @@ struct ScoreView: View {
 `ScrollableNativeScorePreview` 会为每一行谱表保留可读的最小高度；当显示区域
 小于乐谱画布时，它会改为纵向滚动。只有当外层视图已经负责管理乐谱画布尺寸时，
 才需要直接使用 `NativeScorePreview`。
+
+Apple 端两个渲染视图默认都会跟随 SwiftUI 的浅色/暗色环境。需要固定主题时，
+可传入 `theme: .light` 或 `theme: .dark`；也可通过 `NativeScoreTheme` 自定义背景色、
+谱面前景色和播放高亮色。
 
 ### 导入 MIDI 文件
 

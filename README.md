@@ -153,6 +153,8 @@ for embedding the canvas, or run the
 the distributable AAR and test MusicXML, MIDI, Bravura rendering, and playback
 highlighting on Android 9–15 ARM64 emulators. The AAR—not a JAR—is required
 because the Android package includes native Swift libraries and font resources.
+The Compose adapter follows the Android system color scheme by default and can
+be pinned or customized with `AthenaNotationColors`.
 
 ## Quick Start
 
@@ -179,6 +181,11 @@ struct ScoreView: View {
 system and scrolls vertically when its viewport is shorter than the score.
 Use `NativeScorePreview` directly only when the containing view already owns
 the notation canvas size.
+
+Both Apple render views follow the SwiftUI color scheme automatically. To pin
+the notation to a specific palette, pass `theme: .light` or `theme: .dark`;
+`NativeScoreTheme` also accepts custom background, foreground, and playback
+highlight colors.
 
 ### Import a MIDI file
 

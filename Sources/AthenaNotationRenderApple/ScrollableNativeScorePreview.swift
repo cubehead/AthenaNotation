@@ -14,12 +14,14 @@ public struct ScrollableNativeScorePreview: View {
   private let playbackEventIDs: Set<NotationEventID>
   private let preferredSystemCount: Int
   private let minimumSystemHeight: CGFloat
+  private let theme: NativeScoreTheme?
 
   public init(
     score: NotationScore,
     playbackEventID: NotationEventID? = nil,
     preferredSystemCount: Int = 1,
-    minimumSystemHeight: CGFloat = 310
+    minimumSystemHeight: CGFloat = 310,
+    theme: NativeScoreTheme? = nil
   ) {
     precondition(preferredSystemCount > 0)
     precondition(minimumSystemHeight > 0)
@@ -27,13 +29,15 @@ public struct ScrollableNativeScorePreview: View {
     playbackEventIDs = playbackEventID.map { [$0] } ?? []
     self.preferredSystemCount = preferredSystemCount
     self.minimumSystemHeight = minimumSystemHeight
+    self.theme = theme
   }
 
   public init(
     score: NotationScore,
     playbackEventIDs: Set<NotationEventID>,
     preferredSystemCount: Int = 1,
-    minimumSystemHeight: CGFloat = 310
+    minimumSystemHeight: CGFloat = 310,
+    theme: NativeScoreTheme? = nil
   ) {
     precondition(preferredSystemCount > 0)
     precondition(minimumSystemHeight > 0)
@@ -41,6 +45,7 @@ public struct ScrollableNativeScorePreview: View {
     self.playbackEventIDs = playbackEventIDs
     self.preferredSystemCount = preferredSystemCount
     self.minimumSystemHeight = minimumSystemHeight
+    self.theme = theme
   }
 
   public var body: some View {
@@ -49,7 +54,8 @@ public struct ScrollableNativeScorePreview: View {
         NativeScorePreview(
           score: score,
           playbackEventIDs: playbackEventIDs,
-          preferredSystemCount: preferredSystemCount
+          preferredSystemCount: preferredSystemCount,
+          theme: theme
         )
         .frame(
           width: viewport.size.width,
