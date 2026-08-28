@@ -36,6 +36,8 @@ AthenaNotation 提供乐谱语义模型、排版、SwiftUI 渲染、MusicXML/MID
 - MusicXML `score-partwise` 导入
 - Standard MIDI File Type 0 和 Type 1 导入
 - 速度变化、倒计时、表情、踏板和播放时间线分析
+- 语义化播放事件、按键状态变化和经过校验的 A–B 循环策略
+- 可配置的谱面触摸回调，以及播放时自动跟随滚动
 - 基于精确小节与拍位的事件导航，以及中英文无障碍读谱标签
 - Apple VoiceOver 虚拟乐谱元素和 Android TalkBack 语义数据
 - 可按需选择的细粒度 Swift Package 产品
@@ -183,6 +185,47 @@ Apple 端两个渲染视图默认都会跟随 SwiftUI 的浅色/暗色环境。�
 可传入 `theme: .light` 或 `theme: .dark`；也可通过 `NativeScoreTheme` 自定义背景色、
 谱面前景色和播放高亮色。
 
+### 触摸、播放事件与 A–B 循环
+
+`NativeScorePreview` 和 `ScrollableNativeScorePreview` 在 iPadOS 与 macOS
+使用同一套接口。触摸能力可以在运行时启用或关闭，回调会返回事件 ID、谱表行编号
+和谱面局部坐标：
+
+```swift
+ScrollableNativeScorePreview(
+  score: score,
+  playbackEventIDs: highlightedEventIDs,
+  interactionOptions: allowTouchSeeking ? .default : [],
+  onInteraction: { interaction in
+    let entry = ScoreNavigator(score: score).entry(id: interaction.eventID)
+    seek(to: entry?.onset)
+  }
+)
+```
+
+`ScorePlaybackEventPlanner` 会生成与平台和设备无关的统一事件载荷，其中包括当前
+速度、光标事件、正在发声的乐谱事件、MIDI 音高、力度/踏板状态，以及本帧的
+note-on/note-off 变化：
+
+```swift
+let event = ScorePlaybackEventPlanner(score: score).event(
+  reason: .advanced,
+  from: previousPosition,
+  to: currentPosition
+)
+playbackEventHandler(event)
+```
+
+A–B 播放先用 `ScoreABLoopRange` 校验 A/B，再将范围传给
+`ScoreTempoMap.advance`，最后用 `ScorePlaybackStepPlanner` 解析结果。返回动作会
+明确要求继续、结束，或者准确回到 A 点开始倒计时。倒计时只表示为
+`.countInStarted` 和 `.countInBeat(Int)` 事件；AthenaNotation 不提供倒计时浮层
+或播放控制条，具体视觉与交互由应用自行设计。
+
+Android Compose 适配器提供对应的 `touchEnabled` 与 `onEventTap` 参数，播放高亮
+变化时会自动把当前事件滚动到可见区域，并通过 Android 桥接复用相同的 Swift 分析
+API。完整 Android Example 还演示了 A–B 结果解析和倒计时计算的 JNI 接口。
+
 1.0 导入器保留的乐谱内容与已知限制见
 [MusicXML 覆盖范围](Documentation/MusicXMLCoverage.md)。
 
@@ -228,8 +271,10 @@ swift run AthenaNotationExample
 ```
 
 也可以直接在 Xcode 打开 `Package.swift`，运行
-`AthenaNotationExample` scheme。示例可以显示双谱表钢琴谱，并导入
-MusicXML、`.mid` 和 `.midi` 文件。
+`AthenaNotationExample` scheme。Apple Example 可运行于 iPadOS/macOS，演示文件
+导入、可配置触摸跳转、播放事件回调，以及每轮循环都产生倒计时事件的 A–B 播放。
+Android Example 则演示对应的 Compose 触摸回调、播放自动滚动、A–B 桥接和倒计时
+桥接。
 
 ## 模块
 

@@ -4,11 +4,15 @@ import android.graphics.Bitmap
 import android.content.res.Configuration
 import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.graphics.toPixelMap
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.assertCountEquals
+import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.click
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import java.io.File
@@ -17,6 +21,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.json.JSONObject
 
 @RunWith(AndroidJUnit4::class)
 class NotationComposeInstrumentedTest {
@@ -61,5 +66,26 @@ class NotationComposeInstrumentedTest {
             image.asAndroidBitmap().compress(Bitmap.CompressFormat.PNG, 100, output)
         }
         assertTrue(capture.exists() && capture.length() > 1_000)
+    }
+
+    @Test
+    fun canvasTapReturnsSemanticEventAndUpdatesHighlight() {
+        val root = JSONObject(SwiftNotation().renderMusicXML(DemoFixtures.musicXML))
+        val commands = root.getJSONArray("commands")
+        val notehead = (0 until commands.length())
+            .map { commands.getJSONObject(it) }
+            .first { it.getString("role") == "notehead" && it.has("eventID") }
+        val canvas = compose.onNodeWithTag("notation-canvas")
+        val size = canvas.fetchSemanticsNode().size
+        val scale = size.width.toFloat() / root.getDouble("width").toFloat()
+        canvas.performTouchInput {
+            click(
+                Offset(
+                    notehead.getDouble("x").toFloat() * scale,
+                    notehead.getDouble("y").toFloat() * scale,
+                )
+            )
+        }
+        compose.onNodeWithTag("event-status").assertTextContains("seeked:", substring = true)
     }
 }

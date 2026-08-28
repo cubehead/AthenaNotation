@@ -1,7 +1,6 @@
 /// The exact note-on/note-off delta between two playback frames.
-/// Keeping this independent from AVFoundation makes audio scheduling deterministic
-/// and directly reusable by external visualization adapters.
-public struct PianoNoteTransition: Equatable, Sendable {
+/// The platform-neutral delta is deterministic and reusable by playback consumers.
+public struct PianoNoteTransition: Hashable, Sendable {
   public let noteOns: Set<UInt8>
   public let noteOffs: Set<UInt8>
 

@@ -30,7 +30,9 @@ spanners and voltas. Layout depends only on the semantic model.
 Renders the layout with SwiftUI Canvas, CoreText and the bundled Bravura SMuFL
 font. Highlighted event IDs are accepted as rendering state through the public
 view API. The canvas publishes virtual, localized score events to VoiceOver
-through `ScoreNavigator` and `ScoreAccessibilityFormatter`.
+through `ScoreNavigator` and `ScoreAccessibilityFormatter`. Score views expose
+configurable semantic touch callbacks and can keep the active playback system
+visible. They do not own transport or count-in UI.
 
 ## AthenaNotationRenderAndroid
 
@@ -48,7 +50,9 @@ to TalkBack.
 Builds tempo, count-in, playback, expression, pedal and active-note timelines,
 plus deterministic event navigation and localized accessibility descriptions.
 Clients can query by exact musical time, event identifier, measure, beat, or
-staff without importing a UI framework.
+staff without importing a UI framework. This module also validates A–B ranges,
+resolves repeat boundaries into host actions, and creates semantic playback
+callback payloads. Timers and concrete output services remain client-owned.
 
 ## Importers
 
@@ -71,3 +75,7 @@ and platform services.
 Additional integrations can live in separate packages that depend on
 AthenaNotation. Dependencies must not point from AthenaNotation back into a
 client or integration package.
+
+Presentation components and concrete runtime services remain client-owned.
+Open modules expose semantic state and callbacks without naming a particular
+application or integration.

@@ -9,6 +9,14 @@
 #endif
 import SwiftUI
 
+struct NativeScorePlaybackSystemPreferenceKey: PreferenceKey {
+  static let defaultValue: Int? = nil
+
+  static func reduce(value: inout Int?, nextValue: () -> Int?) {
+    value = nextValue() ?? value
+  }
+}
+
 /// Native Apple renderer for the current VexFlow-to-Swift port subset.
 @available(iOS 17.0, macOS 15.0, *)
 public struct NativeScorePreview: View {
@@ -19,6 +27,9 @@ public struct NativeScorePreview: View {
   private let playbackEventIDs: Set<NotationEventID>
   private let preferredSystemCount: Int
   private let theme: NativeScoreTheme?
+  private let interactionOptions: NativeScoreInteractionOptions
+  private let onInteraction: NativeScoreInteractionHandler?
+  private let onEventTap: ((NotationEventID) -> Void)?
 
   public init(
     score: NotationScore,
@@ -26,11 +37,15 @@ public struct NativeScorePreview: View {
     preferredSystemCount: Int = 1,
     theme: NativeScoreTheme? = nil
   ) {
-    precondition(preferredSystemCount > 0)
-    self.score = score
-    playbackEventIDs = playbackEventID.map { [$0] } ?? []
-    self.preferredSystemCount = preferredSystemCount
-    self.theme = theme
+    self.init(
+      score: score,
+      playbackEventID: playbackEventID,
+      preferredSystemCount: preferredSystemCount,
+      theme: theme,
+      interactionOptions: .default,
+      onInteraction: nil,
+      onEventTap: nil
+    )
   }
 
   public init(
@@ -39,11 +54,15 @@ public struct NativeScorePreview: View {
     preferredSystemCount: Int = 1,
     theme: NativeScoreTheme? = nil
   ) {
-    precondition(preferredSystemCount > 0)
-    self.score = score
-    self.playbackEventIDs = playbackEventIDs
-    self.preferredSystemCount = preferredSystemCount
-    self.theme = theme
+    self.init(
+      score: score,
+      playbackEventIDs: playbackEventIDs,
+      preferredSystemCount: preferredSystemCount,
+      theme: theme,
+      interactionOptions: .default,
+      onInteraction: nil,
+      onEventTap: nil
+    )
   }
 
   public init(
@@ -53,13 +72,74 @@ public struct NativeScorePreview: View {
     theme: NativeScoreTheme? = nil
   ) {
     self.init(
+      voices: voices,
+      playbackEventID: playbackEventID,
+      preferredSystemCount: preferredSystemCount,
+      theme: theme,
+      interactionOptions: .default,
+      onInteraction: nil,
+      onEventTap: nil
+    )
+  }
+
+  public init(
+    score: NotationScore,
+    playbackEventID: NotationEventID? = nil,
+    preferredSystemCount: Int = 1,
+    theme: NativeScoreTheme? = nil,
+    interactionOptions: NativeScoreInteractionOptions,
+    onInteraction: NativeScoreInteractionHandler? = nil,
+    onEventTap: ((NotationEventID) -> Void)? = nil
+  ) {
+    precondition(preferredSystemCount > 0)
+    self.score = score
+    playbackEventIDs = playbackEventID.map { [$0] } ?? []
+    self.preferredSystemCount = preferredSystemCount
+    self.theme = theme
+    self.interactionOptions = interactionOptions
+    self.onInteraction = onInteraction
+    self.onEventTap = onEventTap
+  }
+
+  public init(
+    score: NotationScore,
+    playbackEventIDs: Set<NotationEventID>,
+    preferredSystemCount: Int = 1,
+    theme: NativeScoreTheme? = nil,
+    interactionOptions: NativeScoreInteractionOptions,
+    onInteraction: NativeScoreInteractionHandler? = nil,
+    onEventTap: ((NotationEventID) -> Void)? = nil
+  ) {
+    precondition(preferredSystemCount > 0)
+    self.score = score
+    self.playbackEventIDs = playbackEventIDs
+    self.preferredSystemCount = preferredSystemCount
+    self.theme = theme
+    self.interactionOptions = interactionOptions
+    self.onInteraction = onInteraction
+    self.onEventTap = onEventTap
+  }
+
+  public init(
+    voices: [NotationVoice],
+    playbackEventID: NotationEventID? = nil,
+    preferredSystemCount: Int = 1,
+    theme: NativeScoreTheme? = nil,
+    interactionOptions: NativeScoreInteractionOptions,
+    onInteraction: NativeScoreInteractionHandler? = nil,
+    onEventTap: ((NotationEventID) -> Void)? = nil
+  ) {
+    self.init(
       score: NotationScore(
         staves: [NotationStaff(id: "treble", clef: .treble)],
         voices: voices
       ),
       playbackEventID: playbackEventID,
       preferredSystemCount: preferredSystemCount,
-      theme: theme
+      theme: theme,
+      interactionOptions: interactionOptions,
+      onInteraction: onInteraction,
+      onEventTap: onEventTap
     )
   }
 
@@ -87,6 +167,9 @@ public struct NativeScorePreview: View {
         justifyTo: availableWidth,
         measureDuration: measureDuration
       )
+      let playbackSystemIndex = layouts.firstIndex { layout in
+        layout.events.contains { playbackEventIDs.contains($0.input.event.id) }
+      }
       let beamGroups = layouts.map { BeamPlanner().groups(inputs: $0.events.map(\.input)) }
       let spannerSegments = SpannerPlanner().segments(spanners: score.spanners, layouts: layouts)
       let tupletSegments = TupletPlanner().segments(tuplets: score.tuplets, layouts: layouts)
@@ -237,6 +320,26 @@ public struct NativeScorePreview: View {
         }
       }
       .background(resolvedTheme.background)
+      .preference(
+        key: NativeScorePlaybackSystemPreferenceKey.self,
+        value: playbackSystemIndex
+      )
+      .contentShape(Rectangle())
+      .gesture(
+        SpatialTapGesture().onEnded { tap in
+          guard
+            interactionOptions.contains(.eventTap),
+            let interaction = interactionEvent(
+              nearest: tap.location,
+              canvasSize: proxy.size,
+              notationStart: notationStart,
+              layouts: layouts
+            )
+          else { return }
+          onInteraction?(interaction)
+          onEventTap?(interaction.eventID)
+        }
+      )
       .accessibilityElement(children: .contain)
       .accessibilityLabel(Text("Musical score"))
       .accessibilityChildren {
@@ -255,6 +358,28 @@ public struct NativeScorePreview: View {
 
   private var resolvedTheme: NativeScoreTheme {
     theme ?? (colorScheme == .dark ? .dark : .light)
+  }
+
+  private func interactionEvent(
+    nearest location: CGPoint,
+    canvasSize: CGSize,
+    notationStart: Double,
+    layouts: [HorizontalLayout]
+  ) -> NativeScoreInteractionEvent? {
+    guard !layouts.isEmpty, canvasSize.height > 0 else { return nil }
+    let systemHeight = canvasSize.height / CGFloat(layouts.count)
+    let rawSystemIndex = Int(floor(location.y / max(systemHeight, 1)))
+    let systemIndex = min(max(0, rawSystemIndex), layouts.count - 1)
+    let targetX = Double(location.x) - notationStart
+
+    guard let eventID = layouts[systemIndex].events.min(by: { lhs, rhs in
+      abs(lhs.x - targetX) < abs(rhs.x - targetX)
+    })?.input.event.id else { return nil }
+    return NativeScoreInteractionEvent(
+      eventID: eventID,
+      systemIndex: systemIndex,
+      location: location
+    )
   }
 
   private var measureDuration: Rational {

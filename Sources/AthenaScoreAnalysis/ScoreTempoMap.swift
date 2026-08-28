@@ -3,8 +3,8 @@
 #endif
 
 /// Piecewise-constant tempo over exact score time. It integrates wall time
-/// across tempo boundaries so playback, progress labels, LEDs and hardware
-/// scheduling all agree when a score accelerates or slows down.
+/// across tempo boundaries so playback and other timeline consumers agree when
+/// a score accelerates or slows down.
 public struct ScoreTempoMap: Hashable, Sendable {
   public let changes: [NotationTempoChange]
   public let defaultBeatsPerMinute: Double
@@ -59,21 +59,48 @@ public struct ScoreTempoMap: Hashable, Sendable {
     rate: Double,
     loops: Bool
   ) -> PlaybackAdvanceResult {
+    advance(
+      position: position,
+      duration: duration,
+      elapsedSeconds: elapsedSeconds,
+      rate: rate,
+      loops: loops,
+      loopRange: nil
+    )
+  }
+
+  public func advance(
+    position: Double,
+    duration: Double,
+    elapsedSeconds: Double,
+    rate: Double,
+    loops: Bool,
+    loopRange: Range<Double>?
+  ) -> PlaybackAdvanceResult {
     precondition(duration >= 0)
     precondition(rate > 0)
     guard duration > 0 else {
       return PlaybackAdvanceResult(position: 0, didLoop: false, didFinish: true)
     }
 
+    let requestedStart = min(max(0, loopRange?.lowerBound ?? 0), duration)
+    let requestedEnd = min(max(requestedStart, loopRange?.upperBound ?? duration), duration)
+    let hasValidLoopRange = loops && requestedEnd > requestedStart + 0.000_000_001
+    let loopStart = hasValidLoopRange ? requestedStart : 0
+    let playbackEnd = hasValidLoopRange ? requestedEnd : duration
     var current = min(max(0, position), duration)
-    var remaining = max(0, elapsedSeconds)
     var didLoop = false
+    if loops && (current < loopStart || current >= playbackEnd) {
+      didLoop = current >= playbackEnd
+      current = loopStart
+    }
+    var remaining = max(0, elapsedSeconds)
 
     while remaining > 0 {
       let nextTempoOnset = changes
         .map(\.onset.doubleValue)
-        .first { $0 > current + 0.000_000_001 && $0 < duration }
-      let boundary = nextTempoOnset ?? duration
+        .first { $0 > current + 0.000_000_001 && $0 < playbackEnd }
+      let boundary = nextTempoOnset ?? playbackEnd
       let bpm = beatsPerMinute(at: current)
       let secondsToBoundary =
         ScoreTimeline.seconds(scoreTime: boundary - current, beatsPerMinute: bpm) / rate
@@ -87,11 +114,11 @@ public struct ScoreTempoMap: Hashable, Sendable {
       } else {
         current = boundary
         remaining = max(0, remaining - secondsToBoundary)
-        if current >= duration {
+        if current >= playbackEnd {
           guard loops else {
             return PlaybackAdvanceResult(position: duration, didLoop: didLoop, didFinish: true)
           }
-          current = 0
+          current = loopStart
           didLoop = true
         }
       }

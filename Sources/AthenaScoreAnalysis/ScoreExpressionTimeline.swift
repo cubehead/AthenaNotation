@@ -15,7 +15,7 @@ public struct PlaybackExpressionState: Hashable, Sendable {
 }
 
 /// Resolves dynamics, hairpins and pedal spanners on the same rational timeline
-/// used by notation highlighting and LED scheduling.
+/// used by notation highlighting and other playback consumers.
 public struct ScoreExpressionTimeline: Hashable, Sendable {
   private struct DynamicPoint: Hashable, Sendable {
     let onset: Rational

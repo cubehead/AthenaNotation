@@ -42,4 +42,16 @@ class SwiftRuntimeInstrumentedTest {
         assertFalse(scene.has("error"))
         assertTrue(scene.getJSONArray("commands").length() > 8)
     }
+
+    @Test
+    fun sharedABAndCountInSemanticsRunInsideAndroid() {
+        val step = JSONObject(
+            bridge.resolveABStep(0.49, 1.0, 0.2, 60.0, 0.25, 0.5, true)
+        )
+        assertEquals("looped", step.getString("reason"))
+        assertEquals("beginCountIn", step.getString("action"))
+        assertEquals(0.25, step.getDouble("position"), 0.000_001)
+        assertEquals(4.0, bridge.countInDuration(4, 4, 60.0), 0.000_001)
+        assertEquals(4, bridge.countInBeat(3.9, 4, 4, 60.0))
+    }
 }

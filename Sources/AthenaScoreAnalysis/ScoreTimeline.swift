@@ -3,7 +3,7 @@
 #endif
 
 /// One notation event placed on the score's exact, whole-note-based timeline.
-/// The same value is suitable for UI highlighting and future hardware scheduling.
+/// The same value is suitable for highlighting and other timeline consumers.
 public struct TimedNotationEvent: Identifiable, Hashable, Sendable {
   public let voiceID: String
   public let event: NotationEvent
@@ -129,6 +129,26 @@ public enum ScorePlaybackClock {
     rate: Double,
     loops: Bool
   ) -> PlaybackAdvanceResult {
+    advance(
+      position: position,
+      duration: duration,
+      elapsedSeconds: elapsedSeconds,
+      beatsPerMinute: beatsPerMinute,
+      rate: rate,
+      loops: loops,
+      loopRange: nil
+    )
+  }
+
+  public static func advance(
+    position: Double,
+    duration: Double,
+    elapsedSeconds: Double,
+    beatsPerMinute: Double,
+    rate: Double,
+    loops: Bool,
+    loopRange: Range<Double>?
+  ) -> PlaybackAdvanceResult {
     precondition(duration >= 0)
     precondition(beatsPerMinute > 0)
     precondition(rate > 0)
@@ -136,17 +156,28 @@ public enum ScorePlaybackClock {
       return PlaybackAdvanceResult(position: 0, didLoop: false, didFinish: true)
     }
 
+    let requestedStart = min(max(0, loopRange?.lowerBound ?? 0), duration)
+    let requestedEnd = min(max(requestedStart, loopRange?.upperBound ?? duration), duration)
+    let hasValidLoopRange = loops && requestedEnd > requestedStart + 0.000_000_001
+    let loopStart = hasValidLoopRange ? requestedStart : 0
+    let playbackEnd = hasValidLoopRange ? requestedEnd : duration
+    var current = min(max(0, position), duration)
+    if loops && (current < loopStart || current >= playbackEnd) {
+      current = loopStart
+    }
+
     let increment = ScoreTimeline.scoreTime(
       seconds: max(0, elapsedSeconds) * rate,
       beatsPerMinute: beatsPerMinute
     )
-    let next = max(0, position) + increment
-    guard next >= duration else {
+    let next = current + increment
+    guard next >= playbackEnd else {
       return PlaybackAdvanceResult(position: next, didLoop: false, didFinish: false)
     }
     if loops {
+      let loopDuration = playbackEnd - loopStart
       return PlaybackAdvanceResult(
-        position: next.truncatingRemainder(dividingBy: duration),
+        position: loopStart + (next - loopStart).truncatingRemainder(dividingBy: loopDuration),
         didLoop: true,
         didFinish: false
       )

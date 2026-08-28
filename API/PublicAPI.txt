@@ -765,6 +765,16 @@ AthenaNotationRenderAndroid	symbol	swift.type.method	AndroidSMuFLGlyph.timeSigna
 AthenaNotationRenderApple	relationship	conformsTo	BravuraGlyphMetrics	Swift.Equatable
 AthenaNotationRenderApple	relationship	conformsTo	BravuraGlyphMetrics	Swift.Hashable
 AthenaNotationRenderApple	relationship	conformsTo	BravuraGlyphMetrics	Swift.Sendable
+AthenaNotationRenderApple	relationship	conformsTo	NativeScoreInteractionEvent	Swift.Equatable
+AthenaNotationRenderApple	relationship	conformsTo	NativeScoreInteractionEvent	Swift.Hashable
+AthenaNotationRenderApple	relationship	conformsTo	NativeScoreInteractionEvent	Swift.Sendable
+AthenaNotationRenderApple	relationship	conformsTo	NativeScoreInteractionOptions	Swift.Equatable
+AthenaNotationRenderApple	relationship	conformsTo	NativeScoreInteractionOptions	Swift.ExpressibleByArrayLiteral
+AthenaNotationRenderApple	relationship	conformsTo	NativeScoreInteractionOptions	Swift.Hashable
+AthenaNotationRenderApple	relationship	conformsTo	NativeScoreInteractionOptions	Swift.OptionSet
+AthenaNotationRenderApple	relationship	conformsTo	NativeScoreInteractionOptions	Swift.RawRepresentable
+AthenaNotationRenderApple	relationship	conformsTo	NativeScoreInteractionOptions	Swift.Sendable
+AthenaNotationRenderApple	relationship	conformsTo	NativeScoreInteractionOptions	Swift.SetAlgebra
 AthenaNotationRenderApple	relationship	conformsTo	NativeScorePreview	Swift.Sendable
 AthenaNotationRenderApple	relationship	conformsTo	NativeScorePreview	SwiftUICore.View
 AthenaNotationRenderApple	relationship	conformsTo	SMuFLGlyph	Swift.Equatable
@@ -818,15 +828,26 @@ AthenaNotationRenderApple	symbol	swift.enum.case	SMuFLGlyph.timeSignature3	case 
 AthenaNotationRenderApple	symbol	swift.enum.case	SMuFLGlyph.timeSignature4	case timeSignature4
 AthenaNotationRenderApple	symbol	swift.enum.case	SMuFLGlyph.timeSignature6	case timeSignature6
 AthenaNotationRenderApple	symbol	swift.enum.case	SMuFLGlyph.timeSignature8	case timeSignature8
+AthenaNotationRenderApple	symbol	swift.init	NativeScoreInteractionEvent.init(eventID:systemIndex:location:)	init(eventID: NotationEventID, systemIndex: Int, location: CGPoint)
+AthenaNotationRenderApple	symbol	swift.init	NativeScoreInteractionOptions.init(rawValue:)	init(rawValue: UInt8)
 AthenaNotationRenderApple	symbol	swift.init	NativeScorePreview.init(score:playbackEventID:preferredSystemCount:theme:)	@MainActor init(score: NotationScore, playbackEventID: NotationEventID? = nil, preferredSystemCount: Int = 1, theme: NativeScoreTheme? = nil)
+AthenaNotationRenderApple	symbol	swift.init	NativeScorePreview.init(score:playbackEventID:preferredSystemCount:theme:interactionOptions:onInteraction:onEventTap:)	@MainActor init(score: NotationScore, playbackEventID: NotationEventID? = nil, preferredSystemCount: Int = 1, theme: NativeScoreTheme? = nil, interactionOptions: NativeScoreInteractionOptions, onInteraction: NativeScoreInteractionHandler? = nil, onEventTap: ((NotationEventID) -> Void)? = nil)
 AthenaNotationRenderApple	symbol	swift.init	NativeScorePreview.init(score:playbackEventIDs:preferredSystemCount:theme:)	@MainActor init(score: NotationScore, playbackEventIDs: Set<NotationEventID>, preferredSystemCount: Int = 1, theme: NativeScoreTheme? = nil)
+AthenaNotationRenderApple	symbol	swift.init	NativeScorePreview.init(score:playbackEventIDs:preferredSystemCount:theme:interactionOptions:onInteraction:onEventTap:)	@MainActor init(score: NotationScore, playbackEventIDs: Set<NotationEventID>, preferredSystemCount: Int = 1, theme: NativeScoreTheme? = nil, interactionOptions: NativeScoreInteractionOptions, onInteraction: NativeScoreInteractionHandler? = nil, onEventTap: ((NotationEventID) -> Void)? = nil)
 AthenaNotationRenderApple	symbol	swift.init	NativeScorePreview.init(voices:playbackEventID:preferredSystemCount:theme:)	@MainActor init(voices: [NotationVoice], playbackEventID: NotationEventID? = nil, preferredSystemCount: Int = 1, theme: NativeScoreTheme? = nil)
+AthenaNotationRenderApple	symbol	swift.init	NativeScorePreview.init(voices:playbackEventID:preferredSystemCount:theme:interactionOptions:onInteraction:onEventTap:)	@MainActor init(voices: [NotationVoice], playbackEventID: NotationEventID? = nil, preferredSystemCount: Int = 1, theme: NativeScoreTheme? = nil, interactionOptions: NativeScoreInteractionOptions, onInteraction: NativeScoreInteractionHandler? = nil, onEventTap: ((NotationEventID) -> Void)? = nil)
 AthenaNotationRenderApple	symbol	swift.init	NativeScoreTheme.init(background:foreground:playbackHighlight:)	init(background: Color, foreground: Color, playbackHighlight: Color)
 AthenaNotationRenderApple	symbol	swift.init	SMuFLGlyph.init(rawValue:)	init?(rawValue: UInt32)
 AthenaNotationRenderApple	symbol	swift.init	ScrollableNativeScorePreview.init(score:playbackEventID:preferredSystemCount:minimumSystemHeight:theme:)	@MainActor init(score: NotationScore, playbackEventID: NotationEventID? = nil, preferredSystemCount: Int = 1, minimumSystemHeight: CGFloat = 310, theme: NativeScoreTheme? = nil)
+AthenaNotationRenderApple	symbol	swift.init	ScrollableNativeScorePreview.init(score:playbackEventID:preferredSystemCount:minimumSystemHeight:theme:interactionOptions:onInteraction:onEventTap:)	@MainActor init(score: NotationScore, playbackEventID: NotationEventID? = nil, preferredSystemCount: Int = 1, minimumSystemHeight: CGFloat = 310, theme: NativeScoreTheme? = nil, interactionOptions: NativeScoreInteractionOptions, onInteraction: NativeScoreInteractionHandler? = nil, onEventTap: ((NotationEventID) -> Void)? = nil)
 AthenaNotationRenderApple	symbol	swift.init	ScrollableNativeScorePreview.init(score:playbackEventIDs:preferredSystemCount:minimumSystemHeight:theme:)	@MainActor init(score: NotationScore, playbackEventIDs: Set<NotationEventID>, preferredSystemCount: Int = 1, minimumSystemHeight: CGFloat = 310, theme: NativeScoreTheme? = nil)
+AthenaNotationRenderApple	symbol	swift.init	ScrollableNativeScorePreview.init(score:playbackEventIDs:preferredSystemCount:minimumSystemHeight:theme:interactionOptions:onInteraction:onEventTap:)	@MainActor init(score: NotationScore, playbackEventIDs: Set<NotationEventID>, preferredSystemCount: Int = 1, minimumSystemHeight: CGFloat = 310, theme: NativeScoreTheme? = nil, interactionOptions: NativeScoreInteractionOptions, onInteraction: NativeScoreInteractionHandler? = nil, onEventTap: ((NotationEventID) -> Void)? = nil)
 AthenaNotationRenderApple	symbol	swift.property	BravuraGlyphMetrics.advance	let advance: CGSize
 AthenaNotationRenderApple	symbol	swift.property	BravuraGlyphMetrics.bounds	let bounds: CGRect
+AthenaNotationRenderApple	symbol	swift.property	NativeScoreInteractionEvent.eventID	let eventID: NotationEventID
+AthenaNotationRenderApple	symbol	swift.property	NativeScoreInteractionEvent.location	let location: CGPoint
+AthenaNotationRenderApple	symbol	swift.property	NativeScoreInteractionEvent.systemIndex	let systemIndex: Int
+AthenaNotationRenderApple	symbol	swift.property	NativeScoreInteractionOptions.rawValue	let rawValue: UInt8
 AthenaNotationRenderApple	symbol	swift.property	NativeScorePreview.body	@MainActor var body: some View { get }
 AthenaNotationRenderApple	symbol	swift.property	NativeScoreTheme.background	let background: Color
 AthenaNotationRenderApple	symbol	swift.property	NativeScoreTheme.foreground	let foreground: Color
@@ -834,6 +855,8 @@ AthenaNotationRenderApple	symbol	swift.property	NativeScoreTheme.playbackHighlig
 AthenaNotationRenderApple	symbol	swift.property	SMuFLGlyph.character	var character: String { get }
 AthenaNotationRenderApple	symbol	swift.property	ScrollableNativeScorePreview.body	@MainActor var body: some View { get }
 AthenaNotationRenderApple	symbol	swift.struct	BravuraGlyphMetrics	struct BravuraGlyphMetrics
+AthenaNotationRenderApple	symbol	swift.struct	NativeScoreInteractionEvent	struct NativeScoreInteractionEvent
+AthenaNotationRenderApple	symbol	swift.struct	NativeScoreInteractionOptions	struct NativeScoreInteractionOptions
 AthenaNotationRenderApple	symbol	swift.struct	NativeScorePreview	@MainActor struct NativeScorePreview
 AthenaNotationRenderApple	symbol	swift.struct	NativeScoreTheme	struct NativeScoreTheme
 AthenaNotationRenderApple	symbol	swift.struct	ScrollableNativeScorePreview	@MainActor struct ScrollableNativeScorePreview
@@ -845,11 +868,15 @@ AthenaNotationRenderApple	symbol	swift.type.method	SMuFLGlyph.named(_:)	static f
 AthenaNotationRenderApple	symbol	swift.type.method	SMuFLGlyph.timeSignatureDigit(_:)	static func timeSignatureDigit(_ value: UInt8) -> SMuFLGlyph?
 AthenaNotationRenderApple	symbol	swift.type.property	BravuraFont.familyName	static let familyName: String
 AthenaNotationRenderApple	symbol	swift.type.property	BravuraFont.isRegistered	static let isRegistered: Bool
+AthenaNotationRenderApple	symbol	swift.type.property	NativeScoreInteractionOptions.default	static let `default`: NativeScoreInteractionOptions
+AthenaNotationRenderApple	symbol	swift.type.property	NativeScoreInteractionOptions.eventTap	static let eventTap: NativeScoreInteractionOptions
 AthenaNotationRenderApple	symbol	swift.type.property	NativeScoreTheme.dark	static var dark: NativeScoreTheme { get }
 AthenaNotationRenderApple	symbol	swift.type.property	NativeScoreTheme.light	static var light: NativeScoreTheme { get }
+AthenaNotationRenderApple	symbol	swift.typealias	NativeScoreInteractionHandler	typealias NativeScoreInteractionHandler = (NativeScoreInteractionEvent) -> Void
 AthenaScoreAnalysis	relationship	conformsTo	CountInAdvanceResult	Swift.Equatable
 AthenaScoreAnalysis	relationship	conformsTo	CountInAdvanceResult	Swift.Sendable
 AthenaScoreAnalysis	relationship	conformsTo	PianoNoteTransition	Swift.Equatable
+AthenaScoreAnalysis	relationship	conformsTo	PianoNoteTransition	Swift.Hashable
 AthenaScoreAnalysis	relationship	conformsTo	PianoNoteTransition	Swift.Sendable
 AthenaScoreAnalysis	relationship	conformsTo	PlaybackAdvanceResult	Swift.Equatable
 AthenaScoreAnalysis	relationship	conformsTo	PlaybackAdvanceResult	Swift.Hashable
@@ -857,6 +884,9 @@ AthenaScoreAnalysis	relationship	conformsTo	PlaybackAdvanceResult	Swift.Sendable
 AthenaScoreAnalysis	relationship	conformsTo	PlaybackExpressionState	Swift.Equatable
 AthenaScoreAnalysis	relationship	conformsTo	PlaybackExpressionState	Swift.Hashable
 AthenaScoreAnalysis	relationship	conformsTo	PlaybackExpressionState	Swift.Sendable
+AthenaScoreAnalysis	relationship	conformsTo	ScoreABLoopRange	Swift.Equatable
+AthenaScoreAnalysis	relationship	conformsTo	ScoreABLoopRange	Swift.Hashable
+AthenaScoreAnalysis	relationship	conformsTo	ScoreABLoopRange	Swift.Sendable
 AthenaScoreAnalysis	relationship	conformsTo	ScoreAccessibilityFormatter	Swift.Equatable
 AthenaScoreAnalysis	relationship	conformsTo	ScoreAccessibilityFormatter	Swift.Hashable
 AthenaScoreAnalysis	relationship	conformsTo	ScoreAccessibilityFormatter	Swift.Sendable
@@ -872,6 +902,24 @@ AthenaScoreAnalysis	relationship	conformsTo	ScoreNavigationEntry	Swift.Sendable
 AthenaScoreAnalysis	relationship	conformsTo	ScoreNavigator	Swift.Equatable
 AthenaScoreAnalysis	relationship	conformsTo	ScoreNavigator	Swift.Hashable
 AthenaScoreAnalysis	relationship	conformsTo	ScoreNavigator	Swift.Sendable
+AthenaScoreAnalysis	relationship	conformsTo	ScorePlaybackEvent	Swift.Equatable
+AthenaScoreAnalysis	relationship	conformsTo	ScorePlaybackEvent	Swift.Hashable
+AthenaScoreAnalysis	relationship	conformsTo	ScorePlaybackEvent	Swift.Sendable
+AthenaScoreAnalysis	relationship	conformsTo	ScorePlaybackEventPlanner	Swift.Equatable
+AthenaScoreAnalysis	relationship	conformsTo	ScorePlaybackEventPlanner	Swift.Hashable
+AthenaScoreAnalysis	relationship	conformsTo	ScorePlaybackEventPlanner	Swift.Sendable
+AthenaScoreAnalysis	relationship	conformsTo	ScorePlaybackEventReason	Swift.Equatable
+AthenaScoreAnalysis	relationship	conformsTo	ScorePlaybackEventReason	Swift.Hashable
+AthenaScoreAnalysis	relationship	conformsTo	ScorePlaybackEventReason	Swift.Sendable
+AthenaScoreAnalysis	relationship	conformsTo	ScorePlaybackNextAction	Swift.Equatable
+AthenaScoreAnalysis	relationship	conformsTo	ScorePlaybackNextAction	Swift.Hashable
+AthenaScoreAnalysis	relationship	conformsTo	ScorePlaybackNextAction	Swift.Sendable
+AthenaScoreAnalysis	relationship	conformsTo	ScorePlaybackSnapshot	Swift.Equatable
+AthenaScoreAnalysis	relationship	conformsTo	ScorePlaybackSnapshot	Swift.Hashable
+AthenaScoreAnalysis	relationship	conformsTo	ScorePlaybackSnapshot	Swift.Sendable
+AthenaScoreAnalysis	relationship	conformsTo	ScorePlaybackStep	Swift.Equatable
+AthenaScoreAnalysis	relationship	conformsTo	ScorePlaybackStep	Swift.Hashable
+AthenaScoreAnalysis	relationship	conformsTo	ScorePlaybackStep	Swift.Sendable
 AthenaScoreAnalysis	relationship	conformsTo	ScoreTempoMap	Swift.Equatable
 AthenaScoreAnalysis	relationship	conformsTo	ScoreTempoMap	Swift.Hashable
 AthenaScoreAnalysis	relationship	conformsTo	ScoreTempoMap	Swift.Sendable
@@ -885,15 +933,34 @@ AthenaScoreAnalysis	relationship	conformsTo	TimedNotationEvent	Swift.Sendable
 AthenaScoreAnalysis	symbol	swift.enum	PianoNoteStatePlanner	enum PianoNoteStatePlanner
 AthenaScoreAnalysis	symbol	swift.enum	ScoreCountInClock	enum ScoreCountInClock
 AthenaScoreAnalysis	symbol	swift.enum	ScorePlaybackClock	enum ScorePlaybackClock
+AthenaScoreAnalysis	symbol	swift.enum	ScorePlaybackEventReason	enum ScorePlaybackEventReason
+AthenaScoreAnalysis	symbol	swift.enum	ScorePlaybackNextAction	enum ScorePlaybackNextAction
+AthenaScoreAnalysis	symbol	swift.enum	ScorePlaybackStepPlanner	enum ScorePlaybackStepPlanner
+AthenaScoreAnalysis	symbol	swift.enum.case	ScorePlaybackEventReason.advanced	case advanced
+AthenaScoreAnalysis	symbol	swift.enum.case	ScorePlaybackEventReason.countInBeat(_:)	case countInBeat(Int)
+AthenaScoreAnalysis	symbol	swift.enum.case	ScorePlaybackEventReason.countInStarted	case countInStarted
+AthenaScoreAnalysis	symbol	swift.enum.case	ScorePlaybackEventReason.finished	case finished
+AthenaScoreAnalysis	symbol	swift.enum.case	ScorePlaybackEventReason.looped	case looped
+AthenaScoreAnalysis	symbol	swift.enum.case	ScorePlaybackEventReason.paused	case paused
+AthenaScoreAnalysis	symbol	swift.enum.case	ScorePlaybackEventReason.seeked	case seeked
+AthenaScoreAnalysis	symbol	swift.enum.case	ScorePlaybackEventReason.started	case started
+AthenaScoreAnalysis	symbol	swift.enum.case	ScorePlaybackNextAction.beginCountIn(at:)	case beginCountIn(at: Double)
+AthenaScoreAnalysis	symbol	swift.enum.case	ScorePlaybackNextAction.continuePlayback	case continuePlayback
+AthenaScoreAnalysis	symbol	swift.enum.case	ScorePlaybackNextAction.finish	case finish
 AthenaScoreAnalysis	symbol	swift.init	CountInAdvanceResult.init(remainingSeconds:didFinish:)	init(remainingSeconds: Double, didFinish: Bool)
 AthenaScoreAnalysis	symbol	swift.init	PianoNoteTransition.init(noteOns:noteOffs:)	init(noteOns: Set<UInt8>, noteOffs: Set<UInt8>)
 AthenaScoreAnalysis	symbol	swift.init	PlaybackAdvanceResult.init(position:didLoop:didFinish:)	init(position: Double, didLoop: Bool, didFinish: Bool)
 AthenaScoreAnalysis	symbol	swift.init	PlaybackExpressionState.init(velocity:sustainPedalDown:)	init(velocity: UInt8 = 96, sustainPedalDown: Bool = false)
+AthenaScoreAnalysis	symbol	swift.init	ScoreABLoopRange.init(start:end:scoreDuration:)	init?(start: Double, end: Double, scoreDuration: Double)
 AthenaScoreAnalysis	symbol	swift.init	ScoreAccessibilityFormatter.init(localeIdentifier:)	init(localeIdentifier: String = Locale.current.identifier)
 AthenaScoreAnalysis	symbol	swift.init	ScoreExpressionTimeline.init(score:)	init(score: NotationScore)
 AthenaScoreAnalysis	symbol	swift.init	ScoreNavigationEntry.init(from:)	init(from decoder: any Decoder) throws
 AthenaScoreAnalysis	symbol	swift.init	ScoreNavigationEntry.init(voiceID:event:onset:end:measureNumber:beat:)	init(voiceID: String, event: NotationEvent, onset: Rational, end: Rational, measureNumber: Int, beat: Rational)
 AthenaScoreAnalysis	symbol	swift.init	ScoreNavigator.init(score:)	init(score: NotationScore)
+AthenaScoreAnalysis	symbol	swift.init	ScorePlaybackEvent.init(reason:previousPosition:snapshot:noteTransition:)	init(reason: ScorePlaybackEventReason, previousPosition: Rational?, snapshot: ScorePlaybackSnapshot, noteTransition: PianoNoteTransition)
+AthenaScoreAnalysis	symbol	swift.init	ScorePlaybackEventPlanner.init(score:defaultBeatsPerMinute:)	init(score: NotationScore, defaultBeatsPerMinute: Double = 80)
+AthenaScoreAnalysis	symbol	swift.init	ScorePlaybackSnapshot.init(position:beatsPerMinute:cursorEventIDs:activeEvents:activeMIDINotes:expression:)	init(position: Rational, beatsPerMinute: Double, cursorEventIDs: Set<NotationEventID>, activeEvents: [TimedNotationEvent], activeMIDINotes: Set<UInt8>, expression: PlaybackExpressionState)
+AthenaScoreAnalysis	symbol	swift.init	ScorePlaybackStep.init(position:reason:nextAction:)	init(position: Double, reason: ScorePlaybackEventReason, nextAction: ScorePlaybackNextAction)
 AthenaScoreAnalysis	symbol	swift.init	ScoreTempoMap.init(score:defaultBeatsPerMinute:)	init(score: NotationScore, defaultBeatsPerMinute: Double = 80)
 AthenaScoreAnalysis	symbol	swift.init	ScoreTimeline.init(score:)	init(score: NotationScore)
 AthenaScoreAnalysis	symbol	swift.init	TimedNotationEvent.init(voiceID:event:onset:)	init(voiceID: String, event: NotationEvent, onset: Rational)
@@ -905,7 +972,10 @@ AthenaScoreAnalysis	symbol	swift.method	ScoreNavigator.entry(id:)	func entry(id:
 AthenaScoreAnalysis	symbol	swift.method	ScoreNavigator.nearest(to:staffID:)	func nearest(to onset: Rational, staffID: String? = nil) -> ScoreNavigationEntry?
 AthenaScoreAnalysis	symbol	swift.method	ScoreNavigator.next(after:wrapping:)	func next(after id: NotationEventID, wrapping: Bool = false) -> ScoreNavigationEntry?
 AthenaScoreAnalysis	symbol	swift.method	ScoreNavigator.previous(before:wrapping:)	func previous(before id: NotationEventID, wrapping: Bool = false) -> ScoreNavigationEntry?
+AthenaScoreAnalysis	symbol	swift.method	ScorePlaybackEventPlanner.event(reason:from:to:hand:)	func event(reason: ScorePlaybackEventReason, from previousPosition: Rational?, to position: Rational, hand: Hand? = nil) -> ScorePlaybackEvent
+AthenaScoreAnalysis	symbol	swift.method	ScorePlaybackEventPlanner.snapshot(at:hand:)	func snapshot(at position: Rational, hand: Hand? = nil) -> ScorePlaybackSnapshot
 AthenaScoreAnalysis	symbol	swift.method	ScoreTempoMap.advance(position:duration:elapsedSeconds:rate:loops:)	func advance(position: Double, duration: Double, elapsedSeconds: Double, rate: Double, loops: Bool) -> PlaybackAdvanceResult
+AthenaScoreAnalysis	symbol	swift.method	ScoreTempoMap.advance(position:duration:elapsedSeconds:rate:loops:loopRange:)	func advance(position: Double, duration: Double, elapsedSeconds: Double, rate: Double, loops: Bool, loopRange: Range<Double>?) -> PlaybackAdvanceResult
 AthenaScoreAnalysis	symbol	swift.method	ScoreTempoMap.beatsPerMinute(at:)	func beatsPerMinute(at position: Double) -> Double
 AthenaScoreAnalysis	symbol	swift.method	ScoreTempoMap.seconds(to:rate:)	func seconds(to position: Double, rate: Double = 1) -> Double
 AthenaScoreAnalysis	symbol	swift.method	ScoreTimeline.activeEvents(at:hand:includeRests:)	func activeEvents(at position: Rational, hand: Hand? = nil, includeRests: Bool = false) -> [TimedNotationEvent]
@@ -920,6 +990,9 @@ AthenaScoreAnalysis	symbol	swift.property	PlaybackAdvanceResult.didLoop	let didL
 AthenaScoreAnalysis	symbol	swift.property	PlaybackAdvanceResult.position	let position: Double
 AthenaScoreAnalysis	symbol	swift.property	PlaybackExpressionState.sustainPedalDown	let sustainPedalDown: Bool
 AthenaScoreAnalysis	symbol	swift.property	PlaybackExpressionState.velocity	let velocity: UInt8
+AthenaScoreAnalysis	symbol	swift.property	ScoreABLoopRange.end	let end: Double
+AthenaScoreAnalysis	symbol	swift.property	ScoreABLoopRange.range	var range: Range<Double> { get }
+AthenaScoreAnalysis	symbol	swift.property	ScoreABLoopRange.start	let start: Double
 AthenaScoreAnalysis	symbol	swift.property	ScoreAccessibilityFormatter.localeIdentifier	let localeIdentifier: String
 AthenaScoreAnalysis	symbol	swift.property	ScoreNavigationEntry.beat	let beat: Rational
 AthenaScoreAnalysis	symbol	swift.property	ScoreNavigationEntry.end	let end: Rational
@@ -930,6 +1003,19 @@ AthenaScoreAnalysis	symbol	swift.property	ScoreNavigationEntry.onset	let onset: 
 AthenaScoreAnalysis	symbol	swift.property	ScoreNavigationEntry.voiceID	let voiceID: String
 AthenaScoreAnalysis	symbol	swift.property	ScoreNavigator.entries	let entries: [ScoreNavigationEntry]
 AthenaScoreAnalysis	symbol	swift.property	ScoreNavigator.measureDuration	let measureDuration: Rational
+AthenaScoreAnalysis	symbol	swift.property	ScorePlaybackEvent.noteTransition	let noteTransition: PianoNoteTransition
+AthenaScoreAnalysis	symbol	swift.property	ScorePlaybackEvent.previousPosition	let previousPosition: Rational?
+AthenaScoreAnalysis	symbol	swift.property	ScorePlaybackEvent.reason	let reason: ScorePlaybackEventReason
+AthenaScoreAnalysis	symbol	swift.property	ScorePlaybackEvent.snapshot	let snapshot: ScorePlaybackSnapshot
+AthenaScoreAnalysis	symbol	swift.property	ScorePlaybackSnapshot.activeEvents	let activeEvents: [TimedNotationEvent]
+AthenaScoreAnalysis	symbol	swift.property	ScorePlaybackSnapshot.activeMIDINotes	let activeMIDINotes: Set<UInt8>
+AthenaScoreAnalysis	symbol	swift.property	ScorePlaybackSnapshot.beatsPerMinute	let beatsPerMinute: Double
+AthenaScoreAnalysis	symbol	swift.property	ScorePlaybackSnapshot.cursorEventIDs	let cursorEventIDs: Set<NotationEventID>
+AthenaScoreAnalysis	symbol	swift.property	ScorePlaybackSnapshot.expression	let expression: PlaybackExpressionState
+AthenaScoreAnalysis	symbol	swift.property	ScorePlaybackSnapshot.position	let position: Rational
+AthenaScoreAnalysis	symbol	swift.property	ScorePlaybackStep.nextAction	let nextAction: ScorePlaybackNextAction
+AthenaScoreAnalysis	symbol	swift.property	ScorePlaybackStep.position	let position: Double
+AthenaScoreAnalysis	symbol	swift.property	ScorePlaybackStep.reason	let reason: ScorePlaybackEventReason
 AthenaScoreAnalysis	symbol	swift.property	ScoreTempoMap.changes	let changes: [NotationTempoChange]
 AthenaScoreAnalysis	symbol	swift.property	ScoreTempoMap.defaultBeatsPerMinute	let defaultBeatsPerMinute: Double
 AthenaScoreAnalysis	symbol	swift.property	ScoreTempoMap.hasMidScoreChanges	var hasMidScoreChanges: Bool { get }
@@ -944,10 +1030,15 @@ AthenaScoreAnalysis	symbol	swift.struct	CountInAdvanceResult	struct CountInAdvan
 AthenaScoreAnalysis	symbol	swift.struct	PianoNoteTransition	struct PianoNoteTransition
 AthenaScoreAnalysis	symbol	swift.struct	PlaybackAdvanceResult	struct PlaybackAdvanceResult
 AthenaScoreAnalysis	symbol	swift.struct	PlaybackExpressionState	struct PlaybackExpressionState
+AthenaScoreAnalysis	symbol	swift.struct	ScoreABLoopRange	struct ScoreABLoopRange
 AthenaScoreAnalysis	symbol	swift.struct	ScoreAccessibilityFormatter	struct ScoreAccessibilityFormatter
 AthenaScoreAnalysis	symbol	swift.struct	ScoreExpressionTimeline	struct ScoreExpressionTimeline
 AthenaScoreAnalysis	symbol	swift.struct	ScoreNavigationEntry	struct ScoreNavigationEntry
 AthenaScoreAnalysis	symbol	swift.struct	ScoreNavigator	struct ScoreNavigator
+AthenaScoreAnalysis	symbol	swift.struct	ScorePlaybackEvent	struct ScorePlaybackEvent
+AthenaScoreAnalysis	symbol	swift.struct	ScorePlaybackEventPlanner	struct ScorePlaybackEventPlanner
+AthenaScoreAnalysis	symbol	swift.struct	ScorePlaybackSnapshot	struct ScorePlaybackSnapshot
+AthenaScoreAnalysis	symbol	swift.struct	ScorePlaybackStep	struct ScorePlaybackStep
 AthenaScoreAnalysis	symbol	swift.struct	ScoreTempoMap	struct ScoreTempoMap
 AthenaScoreAnalysis	symbol	swift.struct	ScoreTimeline	struct ScoreTimeline
 AthenaScoreAnalysis	symbol	swift.struct	TimedNotationEvent	struct TimedNotationEvent
@@ -958,5 +1049,8 @@ AthenaScoreAnalysis	symbol	swift.type.method	ScoreCountInClock.durationSeconds(t
 AthenaScoreAnalysis	symbol	swift.type.method	ScoreCountInClock.measureScoreDuration(timeSignature:)	static func measureScoreDuration(timeSignature: TimeSignature) -> Double
 AthenaScoreAnalysis	symbol	swift.type.method	ScoreCountInClock.previewPosition(remainingSeconds:timeSignature:beatsPerMinute:rate:)	static func previewPosition(remainingSeconds: Double, timeSignature: TimeSignature, beatsPerMinute: Double, rate: Double) -> Double
 AthenaScoreAnalysis	symbol	swift.type.method	ScorePlaybackClock.advance(position:duration:elapsedSeconds:beatsPerMinute:rate:loops:)	static func advance(position: Double, duration: Double, elapsedSeconds: Double, beatsPerMinute: Double, rate: Double, loops: Bool) -> PlaybackAdvanceResult
+AthenaScoreAnalysis	symbol	swift.type.method	ScorePlaybackClock.advance(position:duration:elapsedSeconds:beatsPerMinute:rate:loops:loopRange:)	static func advance(position: Double, duration: Double, elapsedSeconds: Double, beatsPerMinute: Double, rate: Double, loops: Bool, loopRange: Range<Double>?) -> PlaybackAdvanceResult
+AthenaScoreAnalysis	symbol	swift.type.method	ScorePlaybackStepPlanner.resolve(_:loopRange:countInOnLoop:)	static func resolve(_ advance: PlaybackAdvanceResult, loopRange: ScoreABLoopRange?, countInOnLoop: Bool = true) -> ScorePlaybackStep
 AthenaScoreAnalysis	symbol	swift.type.method	ScoreTimeline.scoreTime(seconds:beatsPerMinute:)	static func scoreTime(seconds: Double, beatsPerMinute: Double) -> Double
 AthenaScoreAnalysis	symbol	swift.type.method	ScoreTimeline.seconds(scoreTime:beatsPerMinute:)	static func seconds(scoreTime: Double, beatsPerMinute: Double) -> Double
+AthenaScoreAnalysis	symbol	swift.typealias	ScorePlaybackEventHandler	typealias ScorePlaybackEventHandler = @Sendable (ScorePlaybackEvent) -> Void

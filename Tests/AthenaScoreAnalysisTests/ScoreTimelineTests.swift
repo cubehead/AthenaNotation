@@ -135,6 +135,92 @@ final class ScoreTimelineTests: XCTestCase {
     XCTAssertEqual(half.position, 0.25)
   }
 
+  func testPlaybackClockLoopsInsideABRange() {
+    let result = ScorePlaybackClock.advance(
+      position: 1.9,
+      duration: 4,
+      elapsedSeconds: 1,
+      beatsPerMinute: 60,
+      rate: 1,
+      loops: true,
+      loopRange: 1..<2
+    )
+
+    XCTAssertEqual(result.position, 1.15, accuracy: 0.000_001)
+    XCTAssertTrue(result.didLoop)
+    XCTAssertFalse(result.didFinish)
+  }
+
+  func testABLoopStepRequestsCountInAtExactStart() throws {
+    let range = try XCTUnwrap(ScoreABLoopRange(start: 1, end: 2, scoreDuration: 4))
+    let step = ScorePlaybackStepPlanner.resolve(
+      PlaybackAdvanceResult(position: 1.15, didLoop: true, didFinish: false),
+      loopRange: range,
+      countInOnLoop: true
+    )
+
+    XCTAssertEqual(step.position, 1)
+    XCTAssertEqual(step.reason, .looped)
+    XCTAssertEqual(step.nextAction, .beginCountIn(at: 1))
+  }
+
+  func testABLoopStepCanContinueWithoutCountIn() throws {
+    let range = try XCTUnwrap(ScoreABLoopRange(start: 1, end: 2, scoreDuration: 4))
+    let step = ScorePlaybackStepPlanner.resolve(
+      PlaybackAdvanceResult(position: 1.15, didLoop: true, didFinish: false),
+      loopRange: range,
+      countInOnLoop: false
+    )
+
+    XCTAssertEqual(step.position, 1.15)
+    XCTAssertEqual(step.reason, .looped)
+    XCTAssertEqual(step.nextAction, .continuePlayback)
+  }
+
+  func testABLoopRangeClampsAndRejectsInvalidRanges() {
+    XCTAssertEqual(
+      ScoreABLoopRange(start: -1, end: 8, scoreDuration: 4)?.range,
+      0..<4
+    )
+    XCTAssertNil(ScoreABLoopRange(start: 2, end: 2, scoreDuration: 4))
+    XCTAssertNil(ScoreABLoopRange(start: 3, end: 2, scoreDuration: 4))
+  }
+
+  func testPlaybackEventPlannerProducesReusableSemanticCallbackPayload() {
+    let first = NotationEvent(
+      id: NotationEventID(rawValue: "first"),
+      content: .notes([
+        NotatedPitch(midi: MIDIPitch(rawValue: 60), step: .c, octave: 4)
+      ]),
+      duration: Rational(1, 4),
+      staffID: "staff"
+    )
+    let second = NotationEvent(
+      id: NotationEventID(rawValue: "second"),
+      content: .notes([
+        NotatedPitch(midi: MIDIPitch(rawValue: 62), step: .d, octave: 4)
+      ]),
+      duration: Rational(1, 4),
+      staffID: "staff"
+    )
+    let score = NotationScore(
+      staves: [NotationStaff(id: "staff", clef: .treble)],
+      voices: [NotationVoice(id: "voice", events: [first, second])]
+    )
+
+    let update = ScorePlaybackEventPlanner(score: score).event(
+      reason: .seeked,
+      from: .zero,
+      to: Rational(1, 4)
+    )
+
+    XCTAssertEqual(update.reason, .seeked)
+    XCTAssertEqual(update.snapshot.cursorEventIDs, [second.id])
+    XCTAssertEqual(update.snapshot.activeMIDINotes, [62])
+    XCTAssertEqual(update.noteTransition.noteOffs, [60])
+    XCTAssertEqual(update.noteTransition.noteOns, [62])
+  }
+
   func testHandFilterControlsCursorAndUpcomingEvents() {
     let right = NotationEvent(
       id: NotationEventID(rawValue: "right"),
@@ -243,6 +329,17 @@ final class ScoreTimelineTests: XCTestCase {
       loops: false
     )
     XCTAssertEqual(result.position, 0.52, accuracy: 0.000_001)
+
+    let looped = map.advance(
+      position: 0.7,
+      duration: 1,
+      elapsedSeconds: 0.5,
+      rate: 1,
+      loops: true,
+      loopRange: 0.5..<0.75
+    )
+    XCTAssertEqual(looped.position, 0.575, accuracy: 0.000_001)
+    XCTAssertTrue(looped.didLoop)
 
     let unmarked = NotationScore(
       staves: [NotationStaff(id: "default", clef: .treble)],

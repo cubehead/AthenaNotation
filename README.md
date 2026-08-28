@@ -36,6 +36,8 @@ WebView, JavaScript renderer, or third-party MIDI runtime.
 - MusicXML `score-partwise` import
 - Standard MIDI File Type 0 and Type 1 import
 - Tempo changes, count-in, expression, pedal, and playback-timeline analysis
+- Semantic playback events, note transitions, and validated A–B repeat policy
+- Configurable score touch callbacks and automatic playback-following scroll
 - Exact event/measure/beat navigation with localized accessibility labels
 - VoiceOver virtual score elements and TalkBack metadata
 - Focused products, so clients can depend on only the modules they need
@@ -191,6 +193,50 @@ the notation to a specific palette, pass `theme: .light` or `theme: .dark`;
 `NativeScoreTheme` also accepts custom background, foreground, and playback
 highlight colors.
 
+### Touch, playback events, and A–B repeat
+
+`NativeScorePreview` and `ScrollableNativeScorePreview` support the same API on
+iPadOS and macOS. Touch handling can be enabled or disabled at runtime, and the
+callback returns the event ID, system index, and local score position:
+
+```swift
+ScrollableNativeScorePreview(
+  score: score,
+  playbackEventIDs: highlightedEventIDs,
+  interactionOptions: allowTouchSeeking ? .default : [],
+  onInteraction: { interaction in
+    let entry = ScoreNavigator(score: score).entry(id: interaction.eventID)
+    seek(to: entry?.onset)
+  }
+)
+```
+
+`ScorePlaybackEventPlanner` creates one platform- and device-independent event
+payload. It includes tempo, cursor IDs, active notation events, active MIDI note
+numbers, expression state, and note-on/note-off transitions:
+
+```swift
+let event = ScorePlaybackEventPlanner(score: score).event(
+  reason: .advanced,
+  from: previousPosition,
+  to: currentPosition
+)
+playbackEventHandler(event)
+```
+
+For A–B playback, validate A and B with `ScoreABLoopRange`, pass its range to
+`ScoreTempoMap.advance`, and resolve the result with
+`ScorePlaybackStepPlanner`. The returned action says whether to continue,
+finish, or begin a count-in exactly at A. Count-in is represented by
+`.countInStarted` and `.countInBeat(Int)` events. AthenaNotation intentionally
+does not provide a count-in overlay or transport controls; applications design
+their own presentation.
+
+The Android Compose adapter exposes matching `touchEnabled` and `onEventTap`
+parameters, automatically scrolls the active highlighted event into view, and
+uses the same Swift analysis APIs through the Android bridge. See the complete
+Android example for JNI calls covering A–B resolution and count-in arithmetic.
+
 See [MusicXML coverage](Documentation/MusicXMLCoverage.md) for the notation
 preserved by the 1.0 importer and its documented limitations.
 
@@ -236,8 +282,11 @@ swift run AthenaNotationExample
 ```
 
 You can also open `Package.swift` in Xcode and run the
-`AthenaNotationExample` scheme. The example renders a two-staff piano score
-and imports MusicXML, `.mid`, and `.midi` files.
+`AthenaNotationExample` scheme. The Apple example runs on iPadOS/macOS and
+demonstrates import, configurable touch-to-seek, playback-event callbacks, and
+an A–B loop with a count-in event on every repeat. The Android example provides
+the equivalent Compose touch callback, playback-following scroll, A–B bridge,
+and count-in bridge.
 
 ## Modules
 

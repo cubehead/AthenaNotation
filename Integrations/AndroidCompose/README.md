@@ -56,6 +56,8 @@ ScrollableAthenaNotationCanvas(
     sceneJSON = renderedSceneJSON,
     bravuraTypeface = bravura,
     systemCount = 2,
+    touchEnabled = allowTouch,
+    onEventTap = { eventID -> seekToEvent(eventID) },
     modifier = Modifier.fillMaxSize(),
 )
 ```
@@ -75,9 +77,16 @@ ScrollableAthenaNotationCanvas(
 without shrinking it to satisfy a short height. It preserves a readable
 minimum height per system and scrolls only the notation viewport when needed.
 Use `AthenaNotationCanvas` directly when the containing UI already owns the
-canvas dimensions.
+canvas dimensions. When the display list's playback highlight changes, the
+scrollable composable brings it into view automatically.
+
+Both composables expose `touchEnabled` and `onEventTap`. Hit testing uses the
+event IDs already attached to Swift-generated engraving commands; Kotlin does
+not reconstruct musical timing. The host maps the returned ID through its
+score/navigation state and decides whether the gesture seeks, selects, or
+annotates.
 
 The JSON boundary is intentional: Kotlin never depends on Swift object memory
 layout, and the display list can be snapshotted for visual regression tests.
-`role` and `eventID` fields also preserve hit-testing, playback highlighting,
-and future accessibility metadata.
+`role` and `eventID` fields preserve hit testing, playback highlighting, and
+accessibility metadata.

@@ -68,12 +68,21 @@ ScrollableAthenaNotationCanvas(
     sceneJSON,
     bravura,
     systemCount = 1,
+    touchEnabled = allowTouch,
+    onEventTap = { eventID ->
+        sceneJSON = notation.renderMusicXMLAtEvent(musicXMLText, eventID)
+    },
     modifier = Modifier.fillMaxSize(),
 )
 ```
 
 该可滚动组件会按可用宽度显示乐谱并保留纵向间距；窗口高度不足时滚动乐谱，
-不会再把五线谱整体缩小。
+不会再把五线谱整体缩小。播放高亮变化时，也会自动滚动到当前事件。
+
+触摸能力可以开关，回调返回语义事件 ID。Example 把开关、状态文字和 A–B 按钮
+保留在应用 UI 中，但触摸后的高亮渲染、A–B 步进结果以及倒计时时长/拍数都调用
+共享 Swift 层。`resolveABStep` 会返回 `advanced`、`looped` 或 `finished`，并给出
+下一步宿主动作；倒计时具体怎么显示仍完全由应用决定。
 
 ## 运行时测试
 
@@ -84,13 +93,14 @@ ScrollableAthenaNotationCanvas(
 ./gradlew :app:connectedDebugAndroidTest
 ```
 
-4 个设备测试会验证：
+设备测试会验证：
 
 - Android 应用进程内加载 Swift/JNI 动态库
 - MusicXML 导入及 Swift 绘制列表生成
 - MIDI 导入及 Swift 绘制列表生成
 - Compose 乐谱渲染，包括黑色雕版像素和蓝色播放高亮
 - 由 Swift 导航元数据生成的逐事件 TalkBack 无障碍语义
+- 通过 JNI 复用的 Swift A–B 循环和倒计时语义
 
 截图测试还会在测试包安装期间，将 `athena-notation.png` 写入应用外部文件目录。
 示例会打包一个很小的 ARM64 zlib bootstrap，因为 Swift 6.3 Android 版本的
@@ -102,4 +112,4 @@ ScrollableAthenaNotationCanvas(
 | --- | ---: | --- |
 | Android 9 | 28 | 4/4 通过 |
 | Android 14 | 34 | 4/4 通过 |
-| Android 15 | 35 | 4/4 通过 |
+| Android 15 | 35 | 6/6 通过 |

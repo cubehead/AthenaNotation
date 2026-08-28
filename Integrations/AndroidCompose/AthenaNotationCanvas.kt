@@ -6,6 +6,9 @@ import android.graphics.Path
 import android.graphics.Rect
 import android.graphics.Typeface
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.waitForUpOrCancellation
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Box
@@ -17,9 +20,13 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.graphics.nativeCanvas
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Dp
@@ -27,6 +34,7 @@ import androidx.compose.ui.unit.dp
 import org.json.JSONArray
 import org.json.JSONObject
 import kotlin.math.min
+import kotlin.math.roundToInt
 
 /** Semantic colors used when executing an AthenaNotation display list. */
 data class AthenaNotationColors(
@@ -60,6 +68,8 @@ fun AthenaNotationCanvas(
     modifier: Modifier = Modifier,
     darkTheme: Boolean = isSystemInDarkTheme(),
     colors: AthenaNotationColors = AthenaNotationColors.forDarkTheme(darkTheme),
+    touchEnabled: Boolean = true,
+    onEventTap: ((String) -> Unit)? = null,
 ) {
     val scene = remember(sceneJSON) { NotationScene.parse(sceneJSON) }
     NotationSceneCanvas(
@@ -68,6 +78,8 @@ fun AthenaNotationCanvas(
         modifier = modifier,
         fitWidth = false,
         colors = colors,
+        touchEnabled = touchEnabled,
+        onEventTap = onEventTap,
     )
 }
 
@@ -87,18 +99,40 @@ fun ScrollableAthenaNotationCanvas(
     modifier: Modifier = Modifier,
     darkTheme: Boolean = isSystemInDarkTheme(),
     colors: AthenaNotationColors = AthenaNotationColors.forDarkTheme(darkTheme),
+    touchEnabled: Boolean = true,
+    onEventTap: ((String) -> Unit)? = null,
 ) {
     require(systemCount > 0) { "systemCount must be positive" }
     require(minimumSystemHeight > 0.dp) { "minimumSystemHeight must be positive" }
     val scene = remember(sceneJSON) { NotationScene.parse(sceneJSON) }
     val scrollState = rememberScrollState()
+    val density = LocalDensity.current
 
-    BoxWithConstraints(modifier = modifier) {
+    BoxWithConstraints(
+        modifier = modifier.notationPointerInput(
+            scene = scene,
+            fitWidth = true,
+            touchEnabled = touchEnabled,
+            onEventTap = onEventTap,
+            verticalScrollOffset = { scrollState.value.toFloat() },
+        ),
+    ) {
         val aspectHeight = maxWidth * (scene.height / scene.width)
         val contentHeight = maxOf(
             aspectHeight,
             minimumSystemHeight * systemCount.toFloat(),
         )
+        val widthPixels = with(density) { maxWidth.toPx() }
+        val viewportPixels = with(density) { maxHeight.toPx() }
+        LaunchedEffect(scene.highlightedCenterY, widthPixels, viewportPixels) {
+            val highlightedY = scene.highlightedCenterY ?: return@LaunchedEffect
+            withFrameNanos { }
+            val scale = widthPixels / scene.width
+            val target = (highlightedY * scale - viewportPixels / 2f)
+                .roundToInt()
+                .coerceIn(0, scrollState.maxValue)
+            scrollState.animateScrollTo(target)
+        }
         Column(
             modifier = Modifier.verticalScroll(scrollState),
         ) {
@@ -108,6 +142,8 @@ fun ScrollableAthenaNotationCanvas(
                 modifier = Modifier.fillMaxWidth().height(contentHeight),
                 fitWidth = true,
                 colors = colors,
+                touchEnabled = false,
+                onEventTap = null,
             )
         }
     }
@@ -120,8 +156,16 @@ private fun NotationSceneCanvas(
     modifier: Modifier,
     fitWidth: Boolean,
     colors: AthenaNotationColors,
+    touchEnabled: Boolean,
+    onEventTap: ((String) -> Unit)?,
 ) {
-    Box(modifier = modifier) {
+    val interactionModifier = Modifier.notationPointerInput(
+        scene = scene,
+        fitWidth = fitWidth,
+        touchEnabled = touchEnabled,
+        onEventTap = onEventTap,
+    )
+    Box(modifier = modifier.then(interactionModifier)) {
         Canvas(modifier = Modifier.matchParentSize()) {
             val widthScale = size.width / scene.width
             val scale = if (fitWidth) widthScale else min(widthScale, size.height / scene.height)
@@ -198,6 +242,37 @@ private fun NotationSceneCanvas(
     }
 }
 
+private fun Modifier.notationPointerInput(
+    scene: NotationScene,
+    fitWidth: Boolean,
+    touchEnabled: Boolean,
+    onEventTap: ((String) -> Unit)?,
+    verticalScrollOffset: () -> Float = { 0f },
+): Modifier = pointerInput(scene, fitWidth, touchEnabled, onEventTap) {
+        if (!touchEnabled || onEventTap == null) return@pointerInput
+        awaitEachGesture {
+            val down = awaitFirstDown(requireUnconsumed = false)
+            val up = waitForUpOrCancellation() ?: return@awaitEachGesture
+            val movement = up.position - down.position
+            val distance = kotlin.math.sqrt(
+                movement.x * movement.x + movement.y * movement.y
+            )
+            if (distance > viewConfiguration.touchSlop) return@awaitEachGesture
+            val widthScale = size.width.toFloat() / scene.width
+            val scale = if (fitWidth) {
+                widthScale
+            } else {
+                min(widthScale, size.height.toFloat() / scene.height)
+            }
+            val offsetX = (size.width - scene.width * scale) / 2f
+            val offsetY = if (fitWidth) 0f else (size.height - scene.height * scale) / 2f
+            scene.eventAt(
+                x = (up.position.x - offsetX) / scale,
+                y = (up.position.y - offsetY + verticalScrollOffset()) / scale,
+            )?.let(onEventTap)
+        }
+    }
+
 private fun DrawCommand.resolvedColor(colors: AthenaNotationColors): Int = when {
     role == "background" -> colors.background
     role == "playbackHighlight" -> colors.playbackHighlight
@@ -212,6 +287,7 @@ private data class PathElement(val verb: String, val points: List<Point>)
 private data class DrawCommand(
     val kind: String,
     val role: String,
+    val eventID: String?,
     val color: String,
     val fill: Boolean,
     val lineWidth: Float,
@@ -247,6 +323,16 @@ private data class NotationScene(
     val commands: List<DrawCommand>,
     val accessibility: List<AccessibilityElement>,
 ) {
+    val highlightedCenterY: Float?
+        get() = commands.firstOrNull { it.role == "playbackHighlight" }?.bounds()?.centerY
+
+    fun eventAt(x: Float, y: Float): String? = commands
+        .asSequence()
+        .filter { it.eventID != null && it.role != "playbackHighlight" }
+        .mapNotNull { command -> command.bounds()?.let { Triple(command.eventID!!, it, it.distanceTo(x, y)) } }
+        .minByOrNull { (_, bounds, distance) -> distance + bounds.area * 0.0001f }
+        ?.first
+
     companion object {
         fun parse(json: String): NotationScene {
             val root = JSONObject(json)
@@ -257,6 +343,9 @@ private data class NotationScene(
                     DrawCommand(
                         kind = command.getString("kind"),
                         role = command.getString("role"),
+                        eventID = command.optString("eventID").takeIf {
+                            command.has("eventID") && !command.isNull("eventID")
+                        },
                         color = command.getString("color"),
                         fill = command.getBoolean("fill"),
                         lineWidth = command.getDouble("lineWidth").toFloat(),
@@ -284,6 +373,41 @@ private data class NotationScene(
             )
         }
     }
+}
+
+private data class Bounds(val left: Float, val top: Float, val right: Float, val bottom: Float) {
+    val centerY: Float get() = (top + bottom) / 2f
+    val area: Float get() = (right - left).coerceAtLeast(1f) * (bottom - top).coerceAtLeast(1f)
+    fun expanded(value: Float) = Bounds(left - value, top - value, right + value, bottom + value)
+    fun contains(x: Float, y: Float) = x in left..right && y in top..bottom
+    fun distanceTo(x: Float, y: Float): Float {
+        val dx = when { x < left -> left - x; x > right -> x - right; else -> 0f }
+        val dy = when { y < top -> top - y; y > bottom -> y - bottom; else -> 0f }
+        return kotlin.math.sqrt(dx * dx + dy * dy)
+    }
+}
+
+private fun DrawCommand.bounds(): Bounds? {
+    val coordinates = buildList {
+        points.forEach { add(it) }
+        path.forEach { addAll(it.points) }
+    }
+    if (coordinates.isNotEmpty()) {
+        return Bounds(
+            coordinates.minOf { it.x },
+            coordinates.minOf { it.y },
+            coordinates.maxOf { it.x },
+            coordinates.maxOf { it.y },
+        )
+    }
+    val halfText = if (kind == "glyph" || kind == "text") fontSize * 0.6f else 0f
+    val halfHeight = if (kind == "glyph" || kind == "text") fontSize * 0.6f else 0f
+    return Bounds(
+        x - halfText,
+        y - halfHeight,
+        x + maxOf(width, halfText),
+        y + maxOf(height, halfHeight),
+    )
 }
 
 private data class AccessibilityElement(

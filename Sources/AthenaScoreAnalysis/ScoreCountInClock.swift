@@ -13,9 +13,8 @@ public struct CountInAdvanceResult: Equatable, Sendable {
   }
 }
 
-/// Arithmetic for a one-measure count-in. During the count-in, the teaching
-/// timeline runs from a negative score position to zero so LEDs can approach
-/// the keys continuously before audio begins.
+/// Arithmetic for a one-measure count-in. During the count-in, a preview
+/// timeline can run from a negative score position to zero before playback.
 public enum ScoreCountInClock {
   public static func measureScoreDuration(timeSignature: TimeSignature) -> Double {
     Double(timeSignature.numerator) / Double(timeSignature.denominator)

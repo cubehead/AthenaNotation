@@ -3,6 +3,7 @@ import AthenaMIDI
 import AthenaMusicXML
 import AthenaNotationCore
 import AthenaNotationRenderAndroid
+import AthenaScoreAnalysis
 import Foundation
 
 @_cdecl("Java_io_github_cubehead_athenanotation_SwiftNotation_healthCheck")
@@ -25,6 +26,25 @@ public func renderMusicXML(
   return makeJavaString(renderMusicXMLScene(xml), env: env)
 }
 
+@_cdecl("Java_io_github_cubehead_athenanotation_SwiftNotation_renderMusicXMLAtEvent")
+public func renderMusicXMLAtEvent(
+  env: UnsafeMutablePointer<JNIEnv?>,
+  receiver: jobject,
+  musicXML: jstring,
+  eventID: jstring
+) -> jstring {
+  guard
+    let xml = readJavaString(musicXML, env: env),
+    let rawEventID = readJavaString(eventID, env: env)
+  else {
+    return makeJavaString(errorJSON("MusicXML interaction: invalid UTF-8 input"), env: env)
+  }
+  return makeJavaString(
+    renderMusicXMLScene(xml, highlightedEventID: rawEventID),
+    env: env
+  )
+}
+
 @_cdecl("Java_io_github_cubehead_athenanotation_SwiftNotation_renderMIDI")
 public func renderMIDI(
   env: UnsafeMutablePointer<JNIEnv?>,
@@ -37,10 +57,87 @@ public func renderMIDI(
   return makeJavaString(renderMIDIScene(data), env: env)
 }
 
-private func renderMusicXMLScene(_ xml: String) -> String {
+@_cdecl("Java_io_github_cubehead_athenanotation_SwiftNotation_resolveABStep")
+public func resolveABStep(
+  env: UnsafeMutablePointer<JNIEnv?>,
+  receiver: jobject,
+  position: jdouble,
+  duration: jdouble,
+  elapsedSeconds: jdouble,
+  beatsPerMinute: jdouble,
+  loopStart: jdouble,
+  loopEnd: jdouble,
+  countInOnLoop: jboolean
+) -> jstring {
+  let range = ScoreABLoopRange(
+    start: loopStart,
+    end: loopEnd,
+    scoreDuration: duration
+  )
+  let advance = ScorePlaybackClock.advance(
+    position: position,
+    duration: duration,
+    elapsedSeconds: elapsedSeconds,
+    beatsPerMinute: beatsPerMinute,
+    rate: 1,
+    loops: range != nil,
+    loopRange: range?.range
+  )
+  let step = ScorePlaybackStepPlanner.resolve(
+    advance,
+    loopRange: range,
+    countInOnLoop: countInOnLoop != 0
+  )
+  return makeJavaString(playbackStepJSON(step), env: env)
+}
+
+@_cdecl("Java_io_github_cubehead_athenanotation_SwiftNotation_countInDuration")
+public func countInDuration(
+  env: UnsafeMutablePointer<JNIEnv?>,
+  receiver: jobject,
+  beats: jint,
+  beatType: jint,
+  beatsPerMinute: jdouble
+) -> jdouble {
+  ScoreCountInClock.durationSeconds(
+    timeSignature: TimeSignature(
+      numerator: UInt8(max(1, min(255, Int(beats)))),
+      denominator: UInt8(max(1, min(255, Int(beatType))))
+    ),
+    beatsPerMinute: beatsPerMinute,
+    rate: 1
+  )
+}
+
+@_cdecl("Java_io_github_cubehead_athenanotation_SwiftNotation_countInBeat")
+public func countInBeat(
+  env: UnsafeMutablePointer<JNIEnv?>,
+  receiver: jobject,
+  remainingSeconds: jdouble,
+  beats: jint,
+  beatType: jint,
+  beatsPerMinute: jdouble
+) -> jint {
+  jint(ScoreCountInClock.displayedBeat(
+    remainingSeconds: remainingSeconds,
+    timeSignature: TimeSignature(
+      numerator: UInt8(max(1, min(255, Int(beats)))),
+      denominator: UInt8(max(1, min(255, Int(beatType))))
+    ),
+    beatsPerMinute: beatsPerMinute,
+    rate: 1
+  ))
+}
+
+private func renderMusicXMLScene(_ xml: String, highlightedEventID: String? = nil) -> String {
   do {
     let imported = try MusicXMLImporter().parse(data: Data(xml.utf8))
-    let highlighted = imported.score.voices.first?.events.first.map { Set([$0.id]) } ?? []
+    let highlighted: Set<NotationEventID>
+    if let highlightedEventID {
+      highlighted = [NotationEventID(rawValue: highlightedEventID)]
+    } else {
+      highlighted = imported.score.voices.first?.events.first.map { Set([$0.id]) } ?? []
+    }
     return try AndroidScoreRenderer(options: .init(
       width: 1_024,
       height: 720,
@@ -49,6 +146,44 @@ private func renderMusicXMLScene(_ xml: String) -> String {
   } catch {
     return errorJSON("MusicXML: \(error)")
   }
+}
+
+private func playbackStepJSON(_ step: ScorePlaybackStep) -> String {
+  let reason: String
+  switch step.reason {
+  case .started: reason = "started"
+  case .advanced: reason = "advanced"
+  case .seeked: reason = "seeked"
+  case .looped: reason = "looped"
+  case .countInStarted: reason = "countInStarted"
+  case .countInBeat(let beat): reason = "countInBeat(\(beat))"
+  case .paused: reason = "paused"
+  case .finished: reason = "finished"
+  }
+  let action: String
+  let countInPosition: Double?
+  switch step.nextAction {
+  case .continuePlayback:
+    action = "continuePlayback"
+    countInPosition = nil
+  case .beginCountIn(let position):
+    action = "beginCountIn"
+    countInPosition = position
+  case .finish:
+    action = "finish"
+    countInPosition = nil
+  }
+  let payload: [String: Any] = [
+    "position": step.position,
+    "reason": reason,
+    "action": action,
+    "countInPosition": countInPosition.map { $0 as Any } ?? NSNull(),
+  ]
+  guard
+    let data = try? JSONSerialization.data(withJSONObject: payload),
+    let value = String(data: data, encoding: .utf8)
+  else { return errorJSON("Playback step: JSON encoding failed") }
+  return value
 }
 
 private func renderMIDIScene(_ midi: Data) -> String {

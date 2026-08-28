@@ -71,13 +71,24 @@ ScrollableAthenaNotationCanvas(
     sceneJSON,
     bravura,
     systemCount = 1,
+    touchEnabled = allowTouch,
+    onEventTap = { eventID ->
+        sceneJSON = notation.renderMusicXMLAtEvent(musicXMLText, eventID)
+    },
     modifier = Modifier.fillMaxSize(),
 )
 ```
 
 The scrollable composable fits notation to the available width and preserves
 its vertical spacing. A short window scrolls the score instead of scaling the
-staff down.
+staff down. It also scrolls the active playback highlight into view.
+
+Touch handling is configurable and returns a semantic event ID. The example
+keeps the switch, status text, and A–B button in application UI while calling
+the shared Swift layer for hit-result rendering, A–B step resolution, and
+count-in duration/beat calculations. `resolveABStep` returns `advanced`,
+`looped`, or `finished` plus the next host action; the host remains free to
+design any count-in presentation.
 
 ## Runtime tests
 
@@ -88,13 +99,14 @@ not on the `bridge` source project. With an ARM64 emulator running:
 ./gradlew :app:connectedDebugAndroidTest
 ```
 
-The four device tests verify:
+The device tests verify:
 
 - Swift/JNI library loading in the Android application process
 - MusicXML import and Swift display-list generation
 - MIDI import and Swift display-list generation
 - Compose rendering with black engraving pixels and blue playback highlighting
 - Event-level TalkBack semantics generated from Swift navigation metadata
+- Shared Swift A–B loop and count-in semantics through JNI
 
 The screenshot test also writes `athena-notation.png` into the app's external
 files directory while the test package is installed. The example packages a
@@ -107,4 +119,4 @@ Validated ARM64 emulator matrix:
 | --- | ---: | --- |
 | Android 9 | 28 | 4/4 passed |
 | Android 14 | 34 | 4/4 passed |
-| Android 15 | 35 | 4/4 passed |
+| Android 15 | 35 | 6/6 passed |

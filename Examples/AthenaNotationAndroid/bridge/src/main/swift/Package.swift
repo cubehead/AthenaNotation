@@ -20,6 +20,7 @@ let package = Package(
       dependencies: [
         .product(name: "AthenaNotationCore", package: "AthenaNotation"),
         .product(name: "AthenaNotationRenderAndroid", package: "AthenaNotation"),
+        .product(name: "AthenaScoreAnalysis", package: "AthenaNotation"),
         .product(name: "AthenaMusicXML", package: "AthenaNotation"),
         .product(name: "AthenaMIDI", package: "AthenaNotation"),
       ]
