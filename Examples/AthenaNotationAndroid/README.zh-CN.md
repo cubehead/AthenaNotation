@@ -41,6 +41,8 @@ $ANDROID_SDK_ROOT/emulator/emulator @Pixel_3a_API_34
 Kotlin/JNI API、Compose 渲染器、Bravura 字体、ARM64 Swift 动态库、必要的
 Swift runtime、libc++ 和 zlib bootstrap。这里不能只使用 JAR，因为 JAR 无法
 完整携带 Android 资源和按 ABI 区分的原生动态库。
+正式版本会把 AAR 和 SHA-256 校验文件作为 GitHub Release 附件，并在文件名中
+同时标明库版本与当前包含的 ARM64 ABI。
 
 使用本地文件接入时，把 AAR 复制到应用的 `libs` 目录：
 

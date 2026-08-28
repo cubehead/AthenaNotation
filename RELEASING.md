@@ -38,9 +38,9 @@ SwiftPM 不需要上传单独的二进制包。根目录保留有效的 `Package
 将仓库推送到 GitHub，并发布完整三段式版本标签：
 
 ```sh
-git tag 1.0.0
+git tag 1.1.0
 git push origin main
-git push origin 1.0.0
+git push origin 1.1.0
 ```
 
 标签必须是 `MAJOR.MINOR.PATCH`；只有 `0.1` 不会被 SwiftPM 识别为完整版本。
@@ -51,7 +51,7 @@ git push origin 1.0.0
 ```swift
 .package(
   url: "https://github.com/cubehead/AthenaNotation.git",
-  from: "1.0.0"
+  from: "1.1.0"
 )
 ```
 
@@ -75,20 +75,43 @@ pod lib lint AthenaNotation.podspec --allow-warnings
 ```ruby
 pod 'AthenaNotation',
     :git => 'https://github.com/cubehead/AthenaNotation.git',
-    :tag => '1.0.0'
+    :tag => '1.1.0'
 ```
 
 暂不执行 `pod trunk push`，也不需要在 CocoaPods 公共 Specs 索引中创建条目。
 已推送的版本标签应视为不可变；修复时增加版本号并创建新标签。
+
+## 发布 Android AAR
+
+Android 发布物必须是包含 Kotlin API、Compose 资源、Bravura 字体、JNI 动态库
+和 Swift runtime 的 AAR，不能使用普通 JAR。从即将发布的提交构建并校验：
+
+```sh
+cd Examples/AthenaNotationAndroid
+./gradlew :bridge:verifyReleaseAar
+```
+
+按版本和 ABI 重命名产物，并生成 SHA-256：
+
+```sh
+cp bridge/build/outputs/aar/athena-notation-android-release.aar \
+  AthenaNotation-1.1.0-android-arm64.aar
+shasum -a 256 AthenaNotation-1.1.0-android-arm64.aar \
+  > AthenaNotation-1.1.0-android-arm64.aar.sha256
+```
+
+两个文件都上传到同名 GitHub Release。当前 AAR 仅包含 `arm64-v8a`，文件名必须
+明确 ABI；加入 x86_64 后再发布统一的多 ABI AAR。AAR 不提交进 Git 仓库。
 
 ## 推荐发布顺序
 
 1. 本地 Swift 和 CocoaPods 验证
 2. 提交版本号与 Changelog
 3. 创建并推送 Git 标签
-4. 创建 GitHub Release
-5. 用 GitHub 标签地址在空白 App 中验证 CocoaPods 安装
-6. 分别验证 SPM 和 CocoaPods 集成
+4. 从标签对应提交构建并验证 Android Release AAR
+5. 创建 GitHub Release，并上传 AAR 与 SHA-256
+6. 用 GitHub 标签地址在空白 App 中验证 CocoaPods 安装
+7. 分别验证 SwiftPM、CocoaPods 和 Android AAR 集成
 
 参考：
 

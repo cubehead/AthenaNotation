@@ -22,8 +22,10 @@ AthenaNotation provides a semantic score model, engraving layout, SwiftUI
 renderer, MusicXML and MIDI importers, and score-timeline analysis—without a
 WebView, JavaScript renderer, or third-party MIDI runtime.
 
-> **Project status:** AthenaNotation 1.0 has a versioned public API baseline and
-> follows Semantic Versioning. See [Public API stability](Documentation/APIStability.md).
+> **Project status:** AthenaNotation 1.1 has a versioned public API baseline,
+> verified Apple and Android integrations, and a Windows-portable Swift core.
+> It follows Semantic Versioning. See
+> [Public API stability](Documentation/APIStability.md).
 
 ## Features
 
@@ -78,7 +80,7 @@ Or add the dependency to `Package.swift`:
 dependencies: [
   .package(
     url: "https://github.com/cubehead/AthenaNotation.git",
-    from: "1.0.0"
+    from: "1.1.0"
   )
 ]
 ```
@@ -108,7 +110,7 @@ use_frameworks!
 target 'YourApp' do
   pod 'AthenaNotation',
       :git => 'https://github.com/cubehead/AthenaNotation.git',
-      :tag => '1.0.0'
+      :tag => '1.1.0'
 end
 ```
 
@@ -160,6 +162,10 @@ for embedding the canvas, or run the
 the distributable AAR and test MusicXML, MIDI, Bravura rendering, and playback
 highlighting on Android 9–15 ARM64 emulators. The AAR—not a JAR—is required
 because the Android package includes native Swift libraries and font resources.
+Versioned GitHub Releases attach an
+`AthenaNotation-<version>-android-arm64.aar` and matching SHA-256 checksum.
+The current AAR supports Android 9 or later on `arm64-v8a`; x86_64 is not
+included yet.
 The Compose adapter follows the Android system color scheme by default and can
 be pinned or customized with `AthenaNotationColors`.
 Its JSON scene also contains localized event labels consumed by the included
@@ -167,9 +173,9 @@ TalkBack semantics layer.
 
 ### Windows preview
 
-The first Windows milestone provides a portable SwiftPM build, a Windows-named
-display-list renderer and a command-line smoke-test example. It deliberately
-does not include a graphical Windows adapter yet:
+The Windows Swift core, display-list renderer, command-line example, and full
+portable test suite are verified natively on GitHub's Windows runner. The
+current milestone deliberately does not include a graphical Windows adapter:
 
 ```powershell
 swift build --target AthenaNotationCore
@@ -358,7 +364,7 @@ for the 1.x compatibility gate.
 - [x] Improve accessibility and score-navigation APIs
 - [x] Stabilize the public API for 1.0
 
-The 1.0 roadmap is complete. Future work is tracked through GitHub issues and
+The 1.1 release roadmap is complete. Future work is tracked through GitHub issues and
 must preserve the [1.x compatibility contract](Documentation/APIStability.md).
 
 ## Contributing

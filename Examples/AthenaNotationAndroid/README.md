@@ -44,6 +44,8 @@ The output is
 Kotlin/JNI API, Compose renderer, Bravura font, ARM64 Swift library, required
 Swift runtime libraries, libc++, and the zlib bootstrap. A JAR is not sufficient
 because it cannot package Android resources and ABI-specific native libraries.
+Published versions provide the AAR and a SHA-256 checksum as GitHub Release
+assets, named with both the library version and the included ARM64 ABI.
 
 For a local file dependency, copy the AAR to your app's `libs` directory:
 

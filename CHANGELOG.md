@@ -2,6 +2,20 @@
 
 ## Unreleased
 
+## 1.1.0 - 2026-08-28
+
+- Add semantic playback callbacks, note transitions, validated A–B repeat
+  ranges, count-in timing events, and reusable playback-step planning.
+- Add configurable score touch callbacks and automatic playback-following
+  scroll behavior on Apple and Android renderers.
+- Extend the Android JNI bridge and Compose example with touch-to-seek,
+  playback highlighting, A–B resolution, count-in calculations, and verified
+  Release AAR consumption.
+- Add the experimental `AthenaNotationRenderWindows` SwiftPM product, portable
+  display-list facade, command-line example, tests, and native Windows CI.
+- Make visual fixtures and public API checks deterministic across macOS and
+  Windows Swift toolchains.
+
 ## 1.0.0 - 2026-08-27
 
 - Add the `AthenaNotationRenderAndroid` Swift product with a Codable display

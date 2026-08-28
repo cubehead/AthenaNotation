@@ -22,8 +22,9 @@ AthenaNotation 提供乐谱语义模型、排版、SwiftUI 渲染、MusicXML/MID
 导入和乐谱时间线分析，不依赖 WebView、JavaScript 渲染器或第三方 MIDI
 运行库。
 
-> **项目状态：** AthenaNotation 1.0 已建立版本化公开 API 基线，并遵循语义化
-> 版本。详见[公开 API 稳定性](Documentation/APIStability.zh-CN.md)。
+> **项目状态：** AthenaNotation 1.1 已建立版本化公开 API 基线，Apple 与
+> Android 接入已完成验证，并提供可移植到 Windows 的 Swift 核心。项目遵循
+> 语义化版本，详见[公开 API 稳定性](Documentation/APIStability.zh-CN.md)。
 
 ## 功能
 
@@ -76,7 +77,7 @@ https://github.com/cubehead/AthenaNotation.git
 dependencies: [
   .package(
     url: "https://github.com/cubehead/AthenaNotation.git",
-    from: "1.0.0"
+    from: "1.1.0"
   )
 ]
 ```
@@ -106,7 +107,7 @@ use_frameworks!
 target 'YourApp' do
   pod 'AthenaNotation',
       :git => 'https://github.com/cubehead/AthenaNotation.git',
-      :tag => '1.0.0'
+      :tag => '1.1.0'
 end
 ```
 
@@ -155,14 +156,17 @@ let sceneJSON = try AndroidRenderBridge().renderScoreJSON(
 构建可分发 AAR，并在 Android 9～15 上端到端测试 Swift/JNI 桥接、MusicXML、
 MIDI、Bravura 渲染和播放高亮。由于包内含 Swift 原生库和字体资源，Android
 发布物应使用 AAR，而不是 JAR。
+正式 GitHub Release 会附带
+`AthenaNotation-<version>-android-arm64.aar` 及其 SHA-256 校验文件。当前 AAR
+支持 Android 9 及以上的 `arm64-v8a` 设备，暂未包含 x86_64。
 Compose 适配器默认跟随 Android 系统的浅色/暗色模式，也可通过
 `AthenaNotationColors` 固定或自定义谱面配色。
 JSON 场景同时包含本地化事件标签，仓库内的 Compose 适配器会将其暴露给 TalkBack。
 
 ### Windows 预览
 
-Windows 第一阶段提供可移植的 SwiftPM 构建、Windows 命名的绘制列表渲染入口，
-以及命令行冒烟测试示例；当前阶段还不包含 Windows 图形界面适配器：
+Windows Swift 核心、绘制列表渲染入口、命令行示例及完整可移植测试，已经在
+GitHub Windows Runner 上完成原生验证；当前阶段还不包含 Windows 图形界面适配器：
 
 ```powershell
 swift build --target AthenaNotationCore
@@ -341,7 +345,7 @@ MIDI、无障碍、导航和分析时间线。
 - [x] 完善无障碍与乐谱导航 API
 - [x] 稳定 1.0 公开 API
 
-1.0 路线图已经完成。后续工作通过 GitHub Issues 跟踪，并遵守
+1.1 版本路线图已经完成。后续工作通过 GitHub Issues 跟踪，并遵守
 [1.x 兼容性承诺](Documentation/APIStability.zh-CN.md)。
 
 ## 参与贡献
