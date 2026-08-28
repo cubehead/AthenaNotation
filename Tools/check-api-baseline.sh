@@ -31,7 +31,10 @@ for module in $modules; do
         "symbol",
         .kind.identifier,
         (.pathComponents | join(".")),
-        ((.declarationFragments // []) | map(.spelling) | join(""))
+        # Swift 6.0 omits @Sendable from some typealias symbol-graph
+        # declarations that Swift 6.3 emits. Normalize that compiler-only
+        # presentation difference before comparing source API.
+        ((.declarationFragments // []) | map(.spelling) | join("") | gsub("@Sendable "; ""))
       ]
     | @tsv
   ' "$graph"

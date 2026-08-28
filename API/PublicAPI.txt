@@ -1053,4 +1053,4 @@ AthenaScoreAnalysis	symbol	swift.type.method	ScorePlaybackClock.advance(position
 AthenaScoreAnalysis	symbol	swift.type.method	ScorePlaybackStepPlanner.resolve(_:loopRange:countInOnLoop:)	static func resolve(_ advance: PlaybackAdvanceResult, loopRange: ScoreABLoopRange?, countInOnLoop: Bool = true) -> ScorePlaybackStep
 AthenaScoreAnalysis	symbol	swift.type.method	ScoreTimeline.scoreTime(seconds:beatsPerMinute:)	static func scoreTime(seconds: Double, beatsPerMinute: Double) -> Double
 AthenaScoreAnalysis	symbol	swift.type.method	ScoreTimeline.seconds(scoreTime:beatsPerMinute:)	static func seconds(scoreTime: Double, beatsPerMinute: Double) -> Double
-AthenaScoreAnalysis	symbol	swift.typealias	ScorePlaybackEventHandler	typealias ScorePlaybackEventHandler = @Sendable (ScorePlaybackEvent) -> Void
+AthenaScoreAnalysis	symbol	swift.typealias	ScorePlaybackEventHandler	typealias ScorePlaybackEventHandler = (ScorePlaybackEvent) -> Void

@@ -38,6 +38,7 @@ private func assertSVGSnapshot(named name: String, scene: AndroidRenderScene) th
     try Data(rendered.utf8).write(to: fixture)
   }
   let expected = try String(contentsOf: fixture, encoding: .utf8)
+    .replacingOccurrences(of: "\r\n", with: "\n")
   #expect(rendered == expected, "Visual fixture changed: \(fixture.path)")
 }
 
