@@ -25,6 +25,7 @@ public struct NativeScorePreview: View {
 
   private let score: NotationScore
   private let playbackEventIDs: Set<NotationEventID>
+  private var showsPlaybackCursor = true
   private let preferredSystemCount: Int
   private let theme: NativeScoreTheme?
   private let interactionOptions: NativeScoreInteractionOptions
@@ -167,9 +168,11 @@ public struct NativeScorePreview: View {
         justifyTo: availableWidth,
         measureDuration: measureDuration
       )
-      let playbackSystemIndex = layouts.firstIndex { layout in
-        layout.events.contains { playbackEventIDs.contains($0.input.event.id) }
-      }
+      let playbackSystemIndex = showsPlaybackCursor
+        ? layouts.firstIndex { layout in
+          layout.events.contains { playbackEventIDs.contains($0.input.event.id) }
+        }
+        : nil
       let beamGroups = layouts.map { BeamPlanner().groups(inputs: $0.events.map(\.input)) }
       let spannerSegments = SpannerPlanner().segments(spanners: score.spanners, layouts: layouts)
       let tupletSegments = TupletPlanner().segments(tuplets: score.tuplets, layouts: layouts)
@@ -243,7 +246,7 @@ public struct NativeScorePreview: View {
             let staffTop = staffTops[staff.id] ?? firstStaffTop
             let x = notationStart + positioned.x
 
-            if playbackEventIDs.contains(event.id) {
+            if showsPlaybackCursor && playbackEventIDs.contains(event.id) {
               let lastStaffTop = staffTops[staves.last?.id ?? ""] ?? staffTop
               let cursor = CGRect(
                 x: x - 3,
@@ -354,6 +357,14 @@ public struct NativeScorePreview: View {
         }
       }
     }
+  }
+
+  /// Controls playback-cursor drawing without discarding the current event IDs.
+  /// A hidden cursor also suppresses playback-following scroll preferences.
+  public func playbackCursorVisible(_ isVisible: Bool) -> Self {
+    var copy = self
+    copy.showsPlaybackCursor = isVisible
+    return copy
   }
 
   private var resolvedTheme: NativeScoreTheme {

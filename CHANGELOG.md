@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Add an independent playback-cursor visibility policy for Apple, Android, and
+  Windows rendering, including matching example controls and Android JNI APIs.
+
 ## 1.1.0 - 2026-08-28
 
 - Add semantic playback callbacks, note transitions, validated A–B repeat

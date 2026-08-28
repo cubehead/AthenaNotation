@@ -26,6 +26,22 @@ public func renderMusicXML(
   return makeJavaString(renderMusicXMLScene(xml), env: env)
 }
 
+@_cdecl("Java_io_github_cubehead_athenanotation_SwiftNotation_renderMusicXMLWithCursorVisibility")
+public func renderMusicXMLWithCursorVisibility(
+  env: UnsafeMutablePointer<JNIEnv?>,
+  receiver: jobject,
+  musicXML: jstring,
+  showsPlaybackCursor: jboolean
+) -> jstring {
+  guard let xml = readJavaString(musicXML, env: env) else {
+    return makeJavaString(errorJSON("MusicXML: invalid UTF-8 input"), env: env)
+  }
+  return makeJavaString(
+    renderMusicXMLScene(xml, showsPlaybackCursor: showsPlaybackCursor != 0),
+    env: env
+  )
+}
+
 @_cdecl("Java_io_github_cubehead_athenanotation_SwiftNotation_renderMusicXMLAtEvent")
 public func renderMusicXMLAtEvent(
   env: UnsafeMutablePointer<JNIEnv?>,
@@ -41,6 +57,30 @@ public func renderMusicXMLAtEvent(
   }
   return makeJavaString(
     renderMusicXMLScene(xml, highlightedEventID: rawEventID),
+    env: env
+  )
+}
+
+@_cdecl("Java_io_github_cubehead_athenanotation_SwiftNotation_renderMusicXMLAtEventWithCursorVisibility")
+public func renderMusicXMLAtEventWithCursorVisibility(
+  env: UnsafeMutablePointer<JNIEnv?>,
+  receiver: jobject,
+  musicXML: jstring,
+  eventID: jstring,
+  showsPlaybackCursor: jboolean
+) -> jstring {
+  guard
+    let xml = readJavaString(musicXML, env: env),
+    let rawEventID = readJavaString(eventID, env: env)
+  else {
+    return makeJavaString(errorJSON("MusicXML interaction: invalid UTF-8 input"), env: env)
+  }
+  return makeJavaString(
+    renderMusicXMLScene(
+      xml,
+      highlightedEventID: rawEventID,
+      showsPlaybackCursor: showsPlaybackCursor != 0
+    ),
     env: env
   )
 }
@@ -129,7 +169,11 @@ public func countInBeat(
   ))
 }
 
-private func renderMusicXMLScene(_ xml: String, highlightedEventID: String? = nil) -> String {
+private func renderMusicXMLScene(
+  _ xml: String,
+  highlightedEventID: String? = nil,
+  showsPlaybackCursor: Bool = true
+) -> String {
   do {
     let imported = try MusicXMLImporter().parse(data: Data(xml.utf8))
     let highlighted: Set<NotationEventID>
@@ -141,7 +185,8 @@ private func renderMusicXMLScene(_ xml: String, highlightedEventID: String? = ni
     return try AndroidScoreRenderer(options: .init(
       width: 1_024,
       height: 720,
-      preferredSystemCount: 1
+      preferredSystemCount: 1,
+      showsPlaybackCursor: showsPlaybackCursor
     )).renderJSON(score: imported.score, playbackEventIDs: highlighted)
   } catch {
     return errorJSON("MusicXML: \(error)")

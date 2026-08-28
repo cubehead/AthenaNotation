@@ -22,6 +22,7 @@ private struct ExampleScoreView: View {
   @State private var isImporting = false
   @State private var errorMessage: String?
   @State private var isScoreTouchEnabled = true
+  @State private var showsPlaybackCursor = true
   @State private var selectedEventID: NotationEventID?
   @State private var selectedPosition: Rational?
   @State private var playbackEventDescription = "触摸音符可生成播放事件"
@@ -62,6 +63,9 @@ private struct ExampleScoreView: View {
 
         HStack(spacing: 12) {
           Toggle("允许触摸跳转", isOn: $isScoreTouchEnabled)
+            .toggleStyle(.switch)
+            .fixedSize()
+          Toggle("显示播放光标", isOn: $showsPlaybackCursor)
             .toggleStyle(.switch)
             .fixedSize()
           Text(playbackEventDescription)
@@ -113,6 +117,7 @@ private struct ExampleScoreView: View {
           interactionOptions: isScoreTouchEnabled ? .default : [],
           onInteraction: handleScoreInteraction
         )
+        .playbackCursorVisible(showsPlaybackCursor)
         .padding(24)
         .background(Color.white)
       }

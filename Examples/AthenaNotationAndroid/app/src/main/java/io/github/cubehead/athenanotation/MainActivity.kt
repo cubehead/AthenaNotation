@@ -30,6 +30,8 @@ class MainActivity : ComponentActivity() {
             val bridge = remember { SwiftNotation() }
             var sceneJSON by remember { mutableStateOf(bridge.renderMusicXML(DemoFixtures.musicXML)) }
             var touchEnabled by remember { mutableStateOf(true) }
+            var showsPlaybackCursor by remember { mutableStateOf(true) }
+            var selectedEventID by remember { mutableStateOf<String?>(null) }
             var eventStatus by remember { mutableStateOf("等待触摸事件") }
             val bravura = remember { ResourcesCompat.getFont(this, BridgeR.font.bravura)!! }
 
@@ -39,6 +41,23 @@ class MainActivity : ComponentActivity() {
                         checked = touchEnabled,
                         onCheckedChange = { touchEnabled = it },
                         modifier = Modifier.testTag("touch-toggle"),
+                    )
+                    Switch(
+                        checked = showsPlaybackCursor,
+                        onCheckedChange = { visible ->
+                            showsPlaybackCursor = visible
+                            sceneJSON = selectedEventID?.let { eventID ->
+                                bridge.renderMusicXMLAtEventWithCursorVisibility(
+                                    DemoFixtures.musicXML,
+                                    eventID,
+                                    visible,
+                                )
+                            } ?: bridge.renderMusicXMLWithCursorVisibility(
+                                DemoFixtures.musicXML,
+                                visible,
+                            )
+                        },
+                        modifier = Modifier.testTag("cursor-toggle"),
                     )
                     Text(eventStatus, modifier = Modifier.weight(1f).padding(8.dp).testTag("event-status"))
                     Button(
@@ -62,8 +81,13 @@ class MainActivity : ComponentActivity() {
                     systemCount = 1,
                     touchEnabled = touchEnabled,
                     onEventTap = { eventID ->
+                        selectedEventID = eventID
                         eventStatus = "seeked: $eventID"
-                        sceneJSON = bridge.renderMusicXMLAtEvent(DemoFixtures.musicXML, eventID)
+                        sceneJSON = bridge.renderMusicXMLAtEventWithCursorVisibility(
+                            DemoFixtures.musicXML,
+                            eventID,
+                            showsPlaybackCursor,
+                        )
                     },
                     modifier = Modifier.weight(1f).fillMaxWidth().testTag("notation-canvas"),
                 )

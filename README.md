@@ -150,7 +150,8 @@ let sceneJSON = try AndroidRenderBridge().renderScoreJSON(
   width: 1024,
   height: 720,
   preferredSystemCount: 2,
-  playbackEventIDs: ["current-event-id"]
+  playbackEventIDs: ["current-event-id"],
+  showsPlaybackCursor: true
 )
 ```
 
@@ -170,6 +171,8 @@ The Compose adapter follows the Android system color scheme by default and can
 be pinned or customized with `AthenaNotationColors`.
 Its JSON scene also contains localized event labels consumed by the included
 TalkBack semantics layer.
+Set `showsPlaybackCursor: false` while retaining the playback event IDs when an
+app needs a score-only view without a cursor or playback-following scroll.
 
 ### Windows preview
 
@@ -185,7 +188,8 @@ swift test
 ```
 
 The Windows facade emits the same deterministic JSON drawing commands used by
-the tested cross-platform renderer. See the
+the tested cross-platform renderer. Its shared options include
+`Options(showsPlaybackCursor: false)` for score-only output. See the
 [Windows support plan](Documentation/WindowsSupport.md) for the native
 WinUI/Direct2D and validation milestones.
 
@@ -236,7 +240,12 @@ ScrollableNativeScorePreview(
     seek(to: entry?.onset)
   }
 )
+.playbackCursorVisible(showsPlaybackCursor)
 ```
+
+Setting the modifier to `false` keeps playback event IDs available to the app,
+but removes the cursor and disables automatic playback-following scroll. This
+is useful for score-reading screens that do not expose a transport.
 
 `ScorePlaybackEventPlanner` creates one platform- and device-independent event
 payload. It includes tempo, cursor IDs, active notation events, active MIDI note

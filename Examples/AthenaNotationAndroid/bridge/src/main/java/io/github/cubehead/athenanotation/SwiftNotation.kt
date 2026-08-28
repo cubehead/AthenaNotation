@@ -3,7 +3,16 @@ package io.github.cubehead.athenanotation
 class SwiftNotation {
     external fun healthCheck(): String
     external fun renderMusicXML(musicXML: String): String
+    external fun renderMusicXMLWithCursorVisibility(
+        musicXML: String,
+        showsPlaybackCursor: Boolean,
+    ): String
     external fun renderMusicXMLAtEvent(musicXML: String, eventID: String): String
+    external fun renderMusicXMLAtEventWithCursorVisibility(
+        musicXML: String,
+        eventID: String,
+        showsPlaybackCursor: Boolean,
+    ): String
     external fun renderMIDI(midiData: ByteArray): String
     external fun resolveABStep(
         position: Double,

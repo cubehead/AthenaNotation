@@ -145,7 +145,8 @@ let sceneJSON = try AndroidRenderBridge().renderScoreJSON(
   width: 1024,
   height: 720,
   preferredSystemCount: 2,
-  playbackEventIDs: ["current-event-id"]
+  playbackEventIDs: ["current-event-id"],
+  showsPlaybackCursor: true
 )
 ```
 
@@ -162,6 +163,8 @@ MIDI、Bravura 渲染和播放高亮。由于包内含 Swift 原生库和字体�
 Compose 适配器默认跟随 Android 系统的浅色/暗色模式，也可通过
 `AthenaNotationColors` 固定或自定义谱面配色。
 JSON 场景同时包含本地化事件标签，仓库内的 Compose 适配器会将其暴露给 TalkBack。
+仅展示乐谱时可设置 `showsPlaybackCursor: false`；播放事件 ID 仍可继续更新，但不会
+绘制光标，也不会触发跟随光标的自动滚动。
 
 ### Windows 预览
 
@@ -175,7 +178,8 @@ swift run AthenaNotationWindowsExample
 swift test
 ```
 
-Windows 渲染入口输出经过验证的确定性 JSON 绘制命令。原生 WinUI/Direct2D
+Windows 渲染入口输出经过验证的确定性 JSON 绘制命令，也可通过
+`Options(showsPlaybackCursor: false)` 输出不含播放光标的纯乐谱场景。原生 WinUI/Direct2D
 适配器及 Windows 主机验证步骤见 [Windows 支持计划](Documentation/WindowsSupport.md)。
 
 ## 快速开始
@@ -223,7 +227,11 @@ ScrollableNativeScorePreview(
     seek(to: entry?.onset)
   }
 )
+.playbackCursorVisible(showsPlaybackCursor)
 ```
+
+将该修饰器设为 `false` 后，应用仍可保留和更新播放事件 ID，但不会绘制光标，也
+不会自动跟随播放位置滚动，适合只负责展示乐谱而不提供播放控制的页面。
 
 `ScorePlaybackEventPlanner` 会生成与平台和设备无关的统一事件载荷，其中包括当前
 速度、光标事件、正在发声的乐谱事件、MIDI 音高、力度/踏板状态，以及本帧的

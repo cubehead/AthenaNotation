@@ -45,6 +45,38 @@ import Testing
   #expect(try JSONSerialization.jsonObject(with: Data(json.utf8)) is [String: Any])
 }
 
+@Test func playbackCursorCanBeHiddenWithoutDiscardingPlaybackState() {
+  let eventID = NotationEventID(rawValue: "hidden-cursor")
+  let score = NotationScore(
+    staves: [NotationStaff(id: "treble", clef: .treble)],
+    voices: [NotationVoice(id: "right", events: [NotationEvent(
+      id: eventID,
+      content: .notes([pitch(60, .c, 4)]),
+      duration: Rational(1, 4),
+      staffID: "treble"
+    )])]
+  )
+  let scene = AndroidScoreRenderer(options: .init(
+    width: 600,
+    height: 260,
+    accessibilityLocaleIdentifier: "en_US",
+    showsPlaybackCursor: false
+  )).render(score: score, playbackEventIDs: [eventID])
+
+  #expect(scene.commands.contains { $0.role == "notehead" })
+  #expect(!scene.commands.contains { $0.role == "playbackHighlight" })
+
+  let scoreJSON = String(decoding: try! JSONEncoder().encode(score), as: UTF8.self)
+  let bridgeJSON = try! AndroidRenderBridge().renderScoreJSON(
+    scoreJSON,
+    width: 600,
+    height: 260,
+    playbackEventIDs: [eventID.rawValue],
+    showsPlaybackCursor: false
+  )
+  #expect(!bridgeJSON.contains("playbackHighlight"))
+}
+
 @Test func renderSupportsGrandStaffAndSpanners() {
   let upperID = NotationEventID(rawValue: "upper")
   let upperEndID = NotationEventID(rawValue: "upper-end")

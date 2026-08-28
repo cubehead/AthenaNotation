@@ -84,6 +84,8 @@ ScrollableAthenaNotationCanvas(
 The scrollable composable fits notation to the available width and preserves
 its vertical spacing. A short window scrolls the score instead of scaling the
 staff down. It also scrolls the active playback highlight into view.
+The example includes a separate cursor-visibility switch; hiding the cursor
+keeps the selected playback event and touch-to-seek state intact.
 
 Touch handling is configurable and returns a semantic event ID. The example
 keeps the switch, status text, and A–B button in application UI while calling

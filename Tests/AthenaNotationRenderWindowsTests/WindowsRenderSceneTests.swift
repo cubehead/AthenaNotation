@@ -32,4 +32,12 @@ import Testing
   #expect(scene.commands.contains { $0.role == "notehead" })
   #expect(scene.commands.contains { $0.role == "playbackHighlight" })
   #expect(try scene.jsonString().contains("windows-test-c4"))
+
+  let scoreOnlyScene = WindowsScoreRenderer(options: .init(
+    width: 800,
+    height: 320,
+    accessibilityLocaleIdentifier: "en_US",
+    showsPlaybackCursor: false
+  )).render(score: score, playbackEventIDs: [eventID])
+  #expect(!scoreOnlyScene.commands.contains { $0.role == "playbackHighlight" })
 }

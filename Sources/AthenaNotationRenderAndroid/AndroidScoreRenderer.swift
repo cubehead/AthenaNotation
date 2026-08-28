@@ -38,13 +38,34 @@ public struct AndroidRenderBridge: Sendable {
     accessibilityLocaleIdentifier: String = "en_US",
     playbackEventIDs: [String] = []
   ) throws -> String {
+    try renderScoreJSON(
+      scoreJSON,
+      width: width,
+      height: height,
+      preferredSystemCount: preferredSystemCount,
+      accessibilityLocaleIdentifier: accessibilityLocaleIdentifier,
+      playbackEventIDs: playbackEventIDs,
+      showsPlaybackCursor: true
+    )
+  }
+
+  public func renderScoreJSON(
+    _ scoreJSON: String,
+    width: Double,
+    height: Double,
+    preferredSystemCount: Int = 1,
+    accessibilityLocaleIdentifier: String = "en_US",
+    playbackEventIDs: [String] = [],
+    showsPlaybackCursor: Bool
+  ) throws -> String {
     let score = try JSONDecoder().decode(NotationScore.self, from: Data(scoreJSON.utf8))
     let ids = Set(playbackEventIDs.map { NotationEventID(rawValue: $0) })
     return try AndroidScoreRenderer(options: .init(
       width: width,
       height: height,
       preferredSystemCount: preferredSystemCount,
-      accessibilityLocaleIdentifier: accessibilityLocaleIdentifier
+      accessibilityLocaleIdentifier: accessibilityLocaleIdentifier,
+      showsPlaybackCursor: showsPlaybackCursor
     )).renderJSON(score: score, playbackEventIDs: ids)
   }
 }
@@ -59,6 +80,7 @@ public struct AndroidScoreRenderer: Sendable {
     public var horizontalPadding: Double
     public var lineSpacing: Double
     public var interStaffGap: Double
+    public var showsPlaybackCursor: Bool
     public var accessibilityLocaleIdentifier: String
 
     public init(
@@ -70,6 +92,28 @@ public struct AndroidScoreRenderer: Sendable {
       interStaffGap: Double = 48,
       accessibilityLocaleIdentifier: String = "en_US"
     ) {
+      self.init(
+        width: width,
+        height: height,
+        preferredSystemCount: preferredSystemCount,
+        horizontalPadding: horizontalPadding,
+        lineSpacing: lineSpacing,
+        interStaffGap: interStaffGap,
+        accessibilityLocaleIdentifier: accessibilityLocaleIdentifier,
+        showsPlaybackCursor: true
+      )
+    }
+
+    public init(
+      width: Double = 1_024,
+      height: Double = 720,
+      preferredSystemCount: Int = 1,
+      horizontalPadding: Double = 36,
+      lineSpacing: Double = 12,
+      interStaffGap: Double = 48,
+      accessibilityLocaleIdentifier: String = "en_US",
+      showsPlaybackCursor: Bool
+    ) {
       precondition(width > 0 && height > 0)
       precondition(preferredSystemCount > 0)
       precondition(horizontalPadding >= 0 && lineSpacing > 0 && interStaffGap >= 0)
@@ -79,6 +123,7 @@ public struct AndroidScoreRenderer: Sendable {
       self.horizontalPadding = horizontalPadding
       self.lineSpacing = lineSpacing
       self.interStaffGap = interStaffGap
+      self.showsPlaybackCursor = showsPlaybackCursor
       self.accessibilityLocaleIdentifier = accessibilityLocaleIdentifier
     }
   }
@@ -177,7 +222,10 @@ public struct AndroidScoreRenderer: Sendable {
         stemDirections: stemDirections
       )
 
-      for positioned in layout.events where playbackEventIDs.contains(positioned.input.event.id) {
+      for positioned in layout.events
+      where options.showsPlaybackCursor
+        && playbackEventIDs.contains(positioned.input.event.id)
+      {
         let x = notationStart + positioned.x
         let bottom = (staffTops[staves.last?.id ?? ""] ?? firstStaffTop)
           + options.lineSpacing * 4

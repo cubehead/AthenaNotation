@@ -14,6 +14,7 @@ public struct ScrollableNativeScorePreview: View {
 
   private let score: NotationScore
   private let playbackEventIDs: Set<NotationEventID>
+  private var showsPlaybackCursor = true
   private let preferredSystemCount: Int
   private let minimumSystemHeight: CGFloat
   private let theme: NativeScoreTheme?
@@ -122,6 +123,7 @@ public struct ScrollableNativeScorePreview: View {
               onInteraction: onInteraction,
               onEventTap: onEventTap
             )
+            .playbackCursorVisible(showsPlaybackCursor)
             .frame(width: viewport.size.width, height: contentHeight)
 
             VStack(spacing: 0) {
@@ -155,6 +157,14 @@ public struct ScrollableNativeScorePreview: View {
       }
     }
     .background(resolvedTheme.background)
+  }
+
+  /// Controls playback-cursor drawing and automatic following while preserving
+  /// the caller's current playback event IDs.
+  public func playbackCursorVisible(_ isVisible: Bool) -> Self {
+    var copy = self
+    copy.showsPlaybackCursor = isVisible
+    return copy
   }
 
   private var resolvedTheme: NativeScoreTheme {
