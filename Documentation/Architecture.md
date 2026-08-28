@@ -7,7 +7,8 @@ without UI or importers.
 AthenaNotationCore
 ├── AthenaNotationLayout
 │   ├── AthenaNotationRenderApple
-│   └── AthenaNotationRenderAndroid
+│   ├── AthenaNotationRenderAndroid
+│   └── AthenaNotationRenderWindows
 ├── AthenaScoreAnalysis
 ├── AthenaMusicXML
 └── AthenaMIDI
@@ -44,6 +45,15 @@ Canvas. It does not import SwiftUI, CoreText, UIKit, or Android APIs, which keep
 the Swift product independently cross-compilable. The scene also carries
 event-level accessibility metadata that the included Compose adapter exposes
 to TalkBack.
+
+## AthenaNotationRenderWindows
+
+Provides a Windows-named facade over the same deterministic display-list model
+used by the Android integration. The initial package has no WinUI dependency:
+it builds the semantic model, engraving layout, render commands and JSON bridge
+entirely in Swift. A future WinUI 3 or Direct2D adapter will execute those
+commands and expose the included accessibility metadata through Windows UI
+Automation. This keeps platform drawing code separate from notation decisions.
 
 ## AthenaScoreAnalysis
 

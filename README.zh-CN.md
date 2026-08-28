@@ -5,7 +5,7 @@
 <h1 align="center">AthenaNotation</h1>
 
 <p align="center">
-  面向 iPadOS、macOS 和 Android 的原生 Swift 乐谱引擎。
+  面向 iPadOS、macOS、Android，并提供实验性 Windows 目标的原生 Swift 乐谱引擎。
 </p>
 
 <p align="center">
@@ -14,7 +14,7 @@
 
 [![CI](https://github.com/cubehead/AthenaNotation/actions/workflows/ci.yml/badge.svg)](https://github.com/cubehead/AthenaNotation/actions/workflows/ci.yml)
 [![Swift 6.0](https://img.shields.io/badge/Swift-6.0-F05138?logo=swift&logoColor=white)](https://www.swift.org/)
-[![支持平台](https://img.shields.io/badge/platforms-iPadOS%20%7C%20macOS%20%7C%20Android-lightgrey)](Package.swift)
+[![支持平台](https://img.shields.io/badge/platforms-iPadOS%20%7C%20macOS%20%7C%20Android%20%7C%20Windows%20preview-lightgrey)](Package.swift)
 [![CocoaPods](https://img.shields.io/badge/CocoaPods-GitHub%20source-EE3322?logo=cocoapods&logoColor=white)](AthenaNotation.podspec)
 [![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
@@ -33,6 +33,7 @@ AthenaNotation 提供乐谱语义模型、排版、SwiftUI 渲染、MusicXML/MID
   Volta 和终止线
 - Apple 端基于 SwiftUI、Canvas 和 Bravura SMuFL 字体的原生渲染
 - Android 端由 Swift 生成雕版绘制列表，Jetpack Compose Canvas 原生执行
+- 实验性 Windows SwiftPM 目标和平台无关绘制列表入口
 - MusicXML `score-partwise` 导入
 - Standard MIDI File Type 0 和 Type 1 导入
 - 速度变化、倒计时、表情、踏板和播放时间线分析
@@ -57,6 +58,7 @@ AthenaNotation 提供可复用的乐谱语义、雕版排版、原生渲染、�
 - iOS / iPadOS 17+
 - macOS 15+
 - Android 构建需要 Swift 6.3、Swift SDK for Android 和 Android NDK r27d+
+- 实验性 Windows 目标需要 Windows 10+、Swift 6.3 和 Visual Studio 2022 C++ 构建工具
 
 ## 安装
 
@@ -90,6 +92,7 @@ dependencies: [
 - `AthenaNotationCore`
 - `AthenaNotationRenderApple`
 - `AthenaNotationRenderAndroid`
+- `AthenaNotationRenderWindows`
 - `AthenaMusicXML`
 - `AthenaMIDI`
 - `AthenaScoreAnalysis`
@@ -155,6 +158,21 @@ MIDI、Bravura 渲染和播放高亮。由于包内含 Swift 原生库和字体�
 Compose 适配器默认跟随 Android 系统的浅色/暗色模式，也可通过
 `AthenaNotationColors` 固定或自定义谱面配色。
 JSON 场景同时包含本地化事件标签，仓库内的 Compose 适配器会将其暴露给 TalkBack。
+
+### Windows 预览
+
+Windows 第一阶段提供可移植的 SwiftPM 构建、Windows 命名的绘制列表渲染入口，
+以及命令行冒烟测试示例；当前阶段还不包含 Windows 图形界面适配器：
+
+```powershell
+swift build --target AthenaNotationCore
+swift build --target AthenaNotationRenderWindows
+swift run AthenaNotationWindowsExample
+swift test
+```
+
+Windows 渲染入口输出经过验证的确定性 JSON 绘制命令。原生 WinUI/Direct2D
+适配器及 Windows 主机验证步骤见 [Windows 支持计划](Documentation/WindowsSupport.md)。
 
 ## 快速开始
 
@@ -284,6 +302,7 @@ Android Example 则演示对应的 Compose 触摸回调、播放自动滚动、A
 | `AthenaNotationLayout` | 雕版、间距、碰撞和系统排版 |
 | `AthenaNotationRenderApple` | 原生 SwiftUI 渲染和 Bravura 资源 |
 | `AthenaNotationRenderAndroid` | Android 绘制列表、JSON 桥接和 Bravura 资源 |
+| `AthenaNotationRenderWindows` | 实验性 Windows 绘制列表入口和 JSON 桥接 |
 | `AthenaScoreAnalysis` | 速度、表情、踏板和播放时间线 |
 | `AthenaMusicXML` | MusicXML 导入 |
 | `AthenaMIDI` | Standard MIDI File 导入 |
@@ -296,6 +315,8 @@ cd AthenaNotation
 swift test
 Tools/check-api-baseline.sh
 swift build --target AthenaNotationRenderAndroid
+swift build --target AthenaNotationRenderWindows
+swift build --product AthenaNotationWindowsExample
 swift build --product AthenaNotationExample
 pod lib lint AthenaNotation.podspec --allow-warnings
 ```
@@ -311,6 +332,8 @@ MIDI、无障碍、导航和分析时间线。
 - [x] 原生乐谱语义模型
 - [x] 原生 SwiftUI 钢琴双谱表渲染
 - [x] Android 绘制列表和 Jetpack Compose Canvas 适配器
+- [x] Windows 可移植 SwiftPM 目标、渲染入口、CLI 示例和 CI 任务
+- [ ] WinUI 3/Direct2D 适配器及 Windows 实机验证
 - [x] MusicXML 和 MIDI 文件导入
 - [x] Swift Package Manager 和 CocoaPods 发布配置
 - [x] 扩展 MusicXML 符号覆盖范围

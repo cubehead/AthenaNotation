@@ -48,3 +48,19 @@ jobs:
           -x buildSwiftDebugArm64
           -x buildZlibBootstrapArm64
           -x copyDebugSwiftLibraries
+
+  windows-swift:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: swift-actions/setup-swift@v2
+        with:
+          swift-version: "6.3"
+      - name: Build portable library
+        run: swift build --target AthenaNotationCore
+      - name: Build Windows renderer facade
+        run: swift build --target AthenaNotationRenderWindows
+      - name: Build Windows command-line example
+        run: swift build --product AthenaNotationWindowsExample
+      - name: Test portable modules
+        run: swift test

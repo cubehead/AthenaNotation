@@ -5,7 +5,7 @@
 <h1 align="center">AthenaNotation</h1>
 
 <p align="center">
-  A native Swift music-notation engine for iPadOS, macOS, and Android.
+  A native Swift music-notation engine for iPadOS, macOS, Android, and an experimental Windows target.
 </p>
 
 <p align="center">
@@ -14,7 +14,7 @@
 
 [![CI](https://github.com/cubehead/AthenaNotation/actions/workflows/ci.yml/badge.svg)](https://github.com/cubehead/AthenaNotation/actions/workflows/ci.yml)
 [![Swift 6.0](https://img.shields.io/badge/Swift-6.0-F05138?logo=swift&logoColor=white)](https://www.swift.org/)
-[![Platforms](https://img.shields.io/badge/platforms-iPadOS%20%7C%20macOS%20%7C%20Android-lightgrey)](Package.swift)
+[![Platforms](https://img.shields.io/badge/platforms-iPadOS%20%7C%20macOS%20%7C%20Android%20%7C%20Windows%20preview-lightgrey)](Package.swift)
 [![CocoaPods](https://img.shields.io/badge/CocoaPods-GitHub%20source-EE3322?logo=cocoapods&logoColor=white)](AthenaNotation.podspec)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
@@ -33,6 +33,7 @@ WebView, JavaScript renderer, or third-party MIDI runtime.
   markings, lyrics, text directions, repeats, voltas, and final barlines
 - Native SwiftUI/Canvas rendering on Apple platforms
 - Swift-owned engraving display lists and a Jetpack Compose Canvas adapter on Android
+- Experimental Windows SwiftPM target and platform-neutral display-list facade
 - MusicXML `score-partwise` import
 - Standard MIDI File Type 0 and Type 1 import
 - Tempo changes, count-in, expression, pedal, and playback-timeline analysis
@@ -59,6 +60,7 @@ layout engine portable across supported platforms. See
 - iOS / iPadOS 17 or later
 - macOS 15 or later
 - Swift 6.3, the Swift SDK for Android, and Android NDK r27d or later for Android builds
+- Windows 10 or later, Swift 6.3, and Visual Studio 2022 C++ build tools for the experimental Windows target
 
 ## Installation
 
@@ -92,6 +94,7 @@ You can also select an individual product:
 - `AthenaNotationCore`
 - `AthenaNotationRenderApple`
 - `AthenaNotationRenderAndroid`
+- `AthenaNotationRenderWindows`
 - `AthenaMusicXML`
 - `AthenaMIDI`
 - `AthenaScoreAnalysis`
@@ -161,6 +164,24 @@ The Compose adapter follows the Android system color scheme by default and can
 be pinned or customized with `AthenaNotationColors`.
 Its JSON scene also contains localized event labels consumed by the included
 TalkBack semantics layer.
+
+### Windows preview
+
+The first Windows milestone provides a portable SwiftPM build, a Windows-named
+display-list renderer and a command-line smoke-test example. It deliberately
+does not include a graphical Windows adapter yet:
+
+```powershell
+swift build --target AthenaNotationCore
+swift build --target AthenaNotationRenderWindows
+swift run AthenaNotationWindowsExample
+swift test
+```
+
+The Windows facade emits the same deterministic JSON drawing commands used by
+the tested cross-platform renderer. See the
+[Windows support plan](Documentation/WindowsSupport.md) for the native
+WinUI/Direct2D and validation milestones.
 
 ## Quick Start
 
@@ -296,6 +317,7 @@ and count-in bridge.
 | `AthenaNotationLayout` | Engraving, spacing, collision, and system planning |
 | `AthenaNotationRenderApple` | Native SwiftUI renderer and Bravura resources |
 | `AthenaNotationRenderAndroid` | Android display-list renderer, JSON bridge, and Bravura resources |
+| `AthenaNotationRenderWindows` | Experimental Windows display-list facade and JSON bridge |
 | `AthenaScoreAnalysis` | Tempo, expression, pedal, and playback timelines |
 | `AthenaMusicXML` | MusicXML importer |
 | `AthenaMIDI` | Standard MIDI File importer |
@@ -308,6 +330,8 @@ cd AthenaNotation
 swift test
 Tools/check-api-baseline.sh
 swift build --target AthenaNotationRenderAndroid
+swift build --target AthenaNotationRenderWindows
+swift build --product AthenaNotationWindowsExample
 swift build --product AthenaNotationExample
 pod lib lint AthenaNotation.podspec --allow-warnings
 ```
@@ -325,6 +349,8 @@ for the 1.x compatibility gate.
 - [x] Native semantic score model
 - [x] Native SwiftUI grand-staff renderer
 - [x] Android render display list and Jetpack Compose Canvas adapter
+- [x] Windows-portable SwiftPM target, renderer facade, CLI example, and CI job
+- [ ] WinUI 3/Direct2D adapter and validation on Windows hardware
 - [x] MusicXML and MIDI file import
 - [x] Swift Package Manager and CocoaPods distribution
 - [x] Expand MusicXML notation coverage
