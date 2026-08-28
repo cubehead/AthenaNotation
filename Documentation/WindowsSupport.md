@@ -10,7 +10,8 @@ the canvas, scrolling, input and accessibility integration.
 - Keep one engraving implementation across Apple, Android and Windows.
 - Make the portable Swift package build independently of Apple frameworks.
 - Use a Windows-named render facade now, backed by the established Codable
-  display-list schema.
+  display-list schema, including adaptive system breaks and variable system
+  geometry.
 - Add WinUI 3 or Direct2D only after the Swift package passes on a Windows host.
 - Treat Windows UI packaging and installer work as a later milestone.
 
@@ -20,7 +21,7 @@ the canvas, scrolling, input and accessibility integration.
 | --- | --- | --- | --- | --- |
 | W0 | Establish the package boundary | Conditional SwiftPM manifest, `AthenaNotationRenderWindows`, CLI example, portable tests | Manifest and all existing tests pass on macOS; Windows CI is configured | Complete |
 | W1 | Prove native Windows compilation | Build core, layout, importers, analysis, renderer and example on Windows 10/11 x64 | `swift build` and `swift test` pass on a clean Windows host | Pending Windows validation |
-| W2 | Render a score in a native window | WinUI 3/Direct2D command executor, Bravura font loading, scroll viewport | MusicXML demo renders with correct sizing, dark mode and playback highlight | Planned |
+| W2 | Render a score in a native window | WinUI 3/Direct2D command executor, Bravura font loading, variable-height scroll viewport | MusicXML demo renders the complete adaptively-broken score with correct sizing, dark mode and playback highlight | Planned |
 | W3 | Add interaction and accessibility | Hit testing, touch/mouse callbacks, auto-follow and UI Automation nodes | Example supports seek-by-click and screen-reader navigation | Planned |
 | W4 | Package and harden | DLL/C ABI decision, sample app packaging, Windows CI matrix | Reproducible x64 release artifact and documented integration | Planned |
 

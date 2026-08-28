@@ -27,7 +27,13 @@ let score = NotationScore(
   ]
 )
 
-let scene = WindowsScoreRenderer(options: .init(width: 800, height: 320))
+let scene = WindowsScoreRenderer(options: .init(
+  width: 800,
+  height: 320,
+  accessibilityLocaleIdentifier: "en_US",
+  showsPlaybackCursor: true,
+  automaticSystemBreaks: true
+))
   .render(score: score, playbackEventIDs: [eventID])
 let snapshot = ScorePlaybackEventPlanner(score: score).snapshot(at: .zero)
 

@@ -69,7 +69,6 @@ val bravura = ResourcesCompat.getFont(
 ScrollableAthenaNotationCanvas(
     sceneJSON,
     bravura,
-    systemCount = 1,
     touchEnabled = allowTouch,
     onEventTap = { eventID ->
         sceneJSON = notation.renderMusicXMLAtEvent(musicXMLText, eventID)
@@ -78,8 +77,9 @@ ScrollableAthenaNotationCanvas(
 )
 ```
 
-该可滚动组件会按可用宽度显示乐谱并保留纵向间距；窗口高度不足时滚动乐谱，
-不会再把五线谱整体缩小。播放高亮变化时，也会自动滚动到当前事件。
+桥接层会启用自动换行，JSON 中包含每行谱表不同的实际高度。可滚动组件按可用
+宽度显示完整乐谱并保留这些纵向间距；窗口高度不足时滚动乐谱，播放高亮变化时
+也会自动滚动到当前事件。
 示例还提供独立的光标显隐开关；隐藏光标不会清除当前播放事件或触摸跳转状态。
 
 触摸能力可以开关，回调返回语义事件 ID。Example 把开关、状态文字和 A–B 按钮

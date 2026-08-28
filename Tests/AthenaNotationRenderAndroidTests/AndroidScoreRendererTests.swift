@@ -181,6 +181,54 @@ import Testing
   #expect(scene.commands.filter { $0.role == "dynamic" }.count == 1)
 }
 
+@Test func automaticLayoutProducesCompleteVariableHeightSystems() throws {
+  let steps: [DiatonicStep] = [.c, .d, .e, .f, .g]
+  var events: [NotationEvent] = []
+  for index in 0..<20 {
+    let eventPitch = index == 0
+      ? pitch(108, .c, 8)
+      : pitch(UInt8(60 + index % 5), steps[index % 5], 4)
+    events.append(NotationEvent(
+      id: .init(rawValue: "adaptive-\(index)"),
+      content: .notes([eventPitch]),
+      duration: Rational(1, 4),
+      staffID: "treble"
+    ))
+  }
+  let score = NotationScore(
+    staves: [NotationStaff(id: "treble", clef: .treble)],
+    voices: [NotationVoice(id: "right", events: events)]
+  )
+  let scene = AndroidScoreRenderer(options: .init(
+    width: 360,
+    height: 180,
+    accessibilityLocaleIdentifier: "en_US",
+    showsPlaybackCursor: true,
+    automaticSystemBreaks: true,
+    minimumSystemHeight: 180
+  )).render(score: score)
+
+  #expect(scene.systems.count > 1)
+  let heights = scene.systems.map { $0.height }
+  #expect(heights.max() != heights.min())
+  #expect(scene.height >= scene.systems.reduce(0) { $0 + $1.height })
+  let renderedEventIDs = Set(scene.commands.compactMap { $0.eventID })
+  #expect(renderedEventIDs.isSuperset(of: events.map { $0.id.rawValue }))
+  #expect(try scene.jsonString().contains("\"systems\""))
+}
+
+@Test func legacySceneJSONWithoutSystemGeometryStillDecodes() throws {
+  let legacyJSON = """
+    {"width":320,"height":180,"commands":[],"accessibility":[]}
+    """
+  let scene = try JSONDecoder().decode(
+    AndroidRenderScene.self,
+    from: Data(legacyJSON.utf8)
+  )
+
+  #expect(scene.systems.isEmpty)
+}
+
 private func pitch(_ midi: UInt8, _ step: DiatonicStep, _ octave: Int) -> NotatedPitch {
   NotatedPitch(midi: MIDIPitch(rawValue: midi), step: step, octave: octave)
 }

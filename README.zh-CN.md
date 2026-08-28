@@ -33,7 +33,8 @@ AthenaNotation 提供乐谱语义模型、排版、SwiftUI 渲染、MusicXML/MID
 - 升降号、指法、奏法、装饰音、力度、渐强渐弱、踏板、歌词、文字方向、重复、
   Volta 和终止线
 - Apple 端基于 SwiftUI、Canvas 和 Bravura SMuFL 字体的原生渲染
-- 按可用宽度与碰撞边界自动换行，不固定每行小节数
+- Apple、Android 和 Windows 绘制列表入口均可按可用宽度与碰撞边界自动换行，
+  不固定每行小节数
 - 根据加线音符、符杆、文字和跨音符记号，为每行谱表独立计算高度
 - Android 端由 Swift 生成雕版绘制列表，Jetpack Compose Canvas 原生执行
 - 实验性 Windows SwiftPM 目标和平台无关绘制列表入口
@@ -148,7 +149,8 @@ let sceneJSON = try AndroidRenderBridge().renderScoreJSON(
   height: 720,
   preferredSystemCount: 2,
   playbackEventIDs: ["current-event-id"],
-  showsPlaybackCursor: true
+  showsPlaybackCursor: true,
+  automaticSystemBreaks: true
 )
 ```
 
@@ -165,6 +167,9 @@ MIDI、Bravura 渲染和播放高亮。由于包内含 Swift 原生库和字体�
 Compose 适配器默认跟随 Android 系统的浅色/暗色模式，也可通过
 `AthenaNotationColors` 固定或自定义谱面配色。
 JSON 场景同时包含本地化事件标签，仓库内的 Compose 适配器会将其暴露给 TalkBack。
+自适应场景还会输出有序的 `systems` 几何数据。Compose 视口按完整场景高度处理滚动、
+播放跟随与触摸命中，并保留每行谱表不同的实际高度。调用渲染器时应传入视口的逻辑
+宽度，使换行结果与真实界面一致。
 仅展示乐谱时可设置 `showsPlaybackCursor: false`；播放事件 ID 仍可继续更新，但不会
 绘制光标，也不会触发跟随光标的自动滚动。
 
@@ -180,7 +185,9 @@ swift run AthenaNotationWindowsExample
 swift test
 ```
 
-Windows 渲染入口输出经过验证的确定性 JSON 绘制命令，也可通过
+Windows 渲染入口输出经过验证的确定性 JSON 绘制命令，并支持相同的
+`automaticSystemBreaks` 选项和可变高度 `systems` 几何，供后续 WinUI/Direct2D
+滚动视口直接使用。也可通过
 `Options(showsPlaybackCursor: false)` 输出不含播放光标的纯乐谱场景。原生 WinUI/Direct2D
 适配器及 Windows 主机验证步骤见 [Windows 支持计划](Documentation/WindowsSupport.md)。
 

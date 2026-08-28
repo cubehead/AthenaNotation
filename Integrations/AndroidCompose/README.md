@@ -55,7 +55,6 @@ val bravura = ResourcesCompat.getFont(context, R.font.bravura)!!
 ScrollableAthenaNotationCanvas(
     sceneJSON = renderedSceneJSON,
     bravuraTypeface = bravura,
-    systemCount = 2,
     touchEnabled = allowTouch,
     onEventTap = { eventID -> seekToEvent(eventID) },
     modifier = Modifier.fillMaxSize(),
@@ -73,9 +72,12 @@ ScrollableAthenaNotationCanvas(
 )
 ```
 
-`ScrollableAthenaNotationCanvas` fits the display list to the available width
-without shrinking it to satisfy a short height. It preserves a readable
-minimum height per system and scrolls only the notation viewport when needed.
+Render adaptive JSON with `automaticSystemBreaks: true` and the viewport's
+logical width. The scene carries every system's `y` and `height`, so
+`ScrollableAthenaNotationCanvas` fits the display list to the available width,
+preserves variable vertical spacing, and scrolls only the notation viewport.
+The legacy `systemCount` argument remains available for scenes created without
+system geometry.
 Use `AthenaNotationCanvas` directly when the containing UI already owns the
 canvas dimensions. When the display list's playback highlight changes, the
 scrollable composable brings it into view automatically.

@@ -7,6 +7,7 @@ import AthenaNotationRenderAndroid
 /// preserving one serializer and one engraving implementation.
 public typealias WindowsRenderScene = AndroidRenderScene
 public typealias WindowsAccessibilityElement = AndroidAccessibilityElement
+public typealias WindowsRenderSystem = AndroidRenderSystem
 public typealias WindowsRenderSceneError = AndroidRenderSceneError
 public typealias WindowsRenderPoint = AndroidRenderPoint
 public typealias WindowsPathVerb = AndroidPathVerb

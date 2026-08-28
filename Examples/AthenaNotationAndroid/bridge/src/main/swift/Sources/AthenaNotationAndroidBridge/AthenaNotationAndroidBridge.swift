@@ -186,7 +186,8 @@ private func renderMusicXMLScene(
       width: 1_024,
       height: 720,
       preferredSystemCount: 1,
-      showsPlaybackCursor: showsPlaybackCursor
+      showsPlaybackCursor: showsPlaybackCursor,
+      automaticSystemBreaks: true
     )).renderJSON(score: imported.score, playbackEventIDs: highlighted)
   } catch {
     return errorJSON("MusicXML: \(error)")

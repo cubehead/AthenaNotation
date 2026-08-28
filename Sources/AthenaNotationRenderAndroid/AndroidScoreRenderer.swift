@@ -58,6 +58,52 @@ public struct AndroidRenderBridge: Sendable {
     playbackEventIDs: [String] = [],
     showsPlaybackCursor: Bool
   ) throws -> String {
+    try renderScoreJSON(
+      scoreJSON,
+      width: width,
+      height: height,
+      preferredSystemCount: preferredSystemCount,
+      accessibilityLocaleIdentifier: accessibilityLocaleIdentifier,
+      playbackEventIDs: playbackEventIDs,
+      showsPlaybackCursor: showsPlaybackCursor,
+      automaticSystemBreaks: false
+    )
+  }
+
+  public func renderScoreJSON(
+    _ scoreJSON: String,
+    width: Double,
+    height: Double,
+    preferredSystemCount: Int = 1,
+    accessibilityLocaleIdentifier: String = "en_US",
+    playbackEventIDs: [String] = [],
+    automaticSystemBreaks: Bool,
+    minimumSystemHeight: Double = 220
+  ) throws -> String {
+    try renderScoreJSON(
+      scoreJSON,
+      width: width,
+      height: height,
+      preferredSystemCount: preferredSystemCount,
+      accessibilityLocaleIdentifier: accessibilityLocaleIdentifier,
+      playbackEventIDs: playbackEventIDs,
+      showsPlaybackCursor: true,
+      automaticSystemBreaks: automaticSystemBreaks,
+      minimumSystemHeight: minimumSystemHeight
+    )
+  }
+
+  public func renderScoreJSON(
+    _ scoreJSON: String,
+    width: Double,
+    height: Double,
+    preferredSystemCount: Int = 1,
+    accessibilityLocaleIdentifier: String = "en_US",
+    playbackEventIDs: [String] = [],
+    showsPlaybackCursor: Bool,
+    automaticSystemBreaks: Bool,
+    minimumSystemHeight: Double = 220
+  ) throws -> String {
     let score = try JSONDecoder().decode(NotationScore.self, from: Data(scoreJSON.utf8))
     let ids = Set(playbackEventIDs.map { NotationEventID(rawValue: $0) })
     return try AndroidScoreRenderer(options: .init(
@@ -65,7 +111,9 @@ public struct AndroidRenderBridge: Sendable {
       height: height,
       preferredSystemCount: preferredSystemCount,
       accessibilityLocaleIdentifier: accessibilityLocaleIdentifier,
-      showsPlaybackCursor: showsPlaybackCursor
+      showsPlaybackCursor: showsPlaybackCursor,
+      automaticSystemBreaks: automaticSystemBreaks,
+      minimumSystemHeight: minimumSystemHeight
     )).renderJSON(score: score, playbackEventIDs: ids)
   }
 }
@@ -81,6 +129,8 @@ public struct AndroidScoreRenderer: Sendable {
     public var lineSpacing: Double
     public var interStaffGap: Double
     public var showsPlaybackCursor: Bool
+    public var automaticSystemBreaks: Bool
+    public var minimumSystemHeight: Double
     public var accessibilityLocaleIdentifier: String
 
     public init(
@@ -114,9 +164,60 @@ public struct AndroidScoreRenderer: Sendable {
       accessibilityLocaleIdentifier: String = "en_US",
       showsPlaybackCursor: Bool
     ) {
+      self.init(
+        width: width,
+        height: height,
+        preferredSystemCount: preferredSystemCount,
+        horizontalPadding: horizontalPadding,
+        lineSpacing: lineSpacing,
+        interStaffGap: interStaffGap,
+        accessibilityLocaleIdentifier: accessibilityLocaleIdentifier,
+        showsPlaybackCursor: showsPlaybackCursor,
+        automaticSystemBreaks: false
+      )
+    }
+
+    public init(
+      width: Double = 1_024,
+      height: Double = 720,
+      preferredSystemCount: Int = 1,
+      horizontalPadding: Double = 36,
+      lineSpacing: Double = 12,
+      interStaffGap: Double = 48,
+      accessibilityLocaleIdentifier: String = "en_US",
+      automaticSystemBreaks: Bool,
+      minimumSystemHeight: Double = 220
+    ) {
+      self.init(
+        width: width,
+        height: height,
+        preferredSystemCount: preferredSystemCount,
+        horizontalPadding: horizontalPadding,
+        lineSpacing: lineSpacing,
+        interStaffGap: interStaffGap,
+        accessibilityLocaleIdentifier: accessibilityLocaleIdentifier,
+        showsPlaybackCursor: true,
+        automaticSystemBreaks: automaticSystemBreaks,
+        minimumSystemHeight: minimumSystemHeight
+      )
+    }
+
+    public init(
+      width: Double = 1_024,
+      height: Double = 720,
+      preferredSystemCount: Int = 1,
+      horizontalPadding: Double = 36,
+      lineSpacing: Double = 12,
+      interStaffGap: Double = 48,
+      accessibilityLocaleIdentifier: String = "en_US",
+      showsPlaybackCursor: Bool,
+      automaticSystemBreaks: Bool,
+      minimumSystemHeight: Double = 220
+    ) {
       precondition(width > 0 && height > 0)
       precondition(preferredSystemCount > 0)
       precondition(horizontalPadding >= 0 && lineSpacing > 0 && interStaffGap >= 0)
+      precondition(minimumSystemHeight > 0)
       self.width = width
       self.height = height
       self.preferredSystemCount = preferredSystemCount
@@ -124,6 +225,8 @@ public struct AndroidScoreRenderer: Sendable {
       self.lineSpacing = lineSpacing
       self.interStaffGap = interStaffGap
       self.showsPlaybackCursor = showsPlaybackCursor
+      self.automaticSystemBreaks = automaticSystemBreaks
+      self.minimumSystemHeight = minimumSystemHeight
       self.accessibilityLocaleIdentifier = accessibilityLocaleIdentifier
     }
   }
@@ -172,12 +275,19 @@ public struct AndroidScoreRenderer: Sendable {
       Int64(staves.first?.timeSignature.numerator ?? 4),
       Int64(staves.first?.timeSignature.denominator ?? 4)
     )
-    let layouts = SystemFormatter(horizontalFormatter: formatter).format(
-      inputs: inputs,
-      systemCount: options.preferredSystemCount,
-      justifyTo: availableWidth,
-      measureDuration: measureDuration
-    )
+    let systemFormatter = SystemFormatter(horizontalFormatter: formatter)
+    let layouts = options.automaticSystemBreaks
+      ? systemFormatter.format(
+        inputs: inputs,
+        fittingWidth: availableWidth,
+        measureDuration: measureDuration
+      )
+      : systemFormatter.format(
+        inputs: inputs,
+        systemCount: options.preferredSystemCount,
+        justifyTo: availableWidth,
+        measureDuration: measureDuration
+      )
     let stemDirections = voiceStemDirections(score.voices)
     let spanners = SpannerPlanner().segments(spanners: score.spanners, layouts: layouts)
     let tuplets = TupletPlanner().segments(tuplets: score.tuplets, layouts: layouts)
@@ -189,21 +299,38 @@ public struct AndroidScoreRenderer: Sendable {
       layouts: layouts,
       scoreEnd: scoreEnd
     )
+    let systemGeometries = makeSystemVerticalGeometries(
+      layouts: layouts,
+      staves: staves,
+      stemDirections: stemDirections,
+      spannerSegments: spanners,
+      tupletSegments: tuplets,
+      voltaSegments: voltas
+    )
+    let measuredHeight = systemGeometries.reduce(0) { $0 + $1.height }
+    let sceneHeight = options.automaticSystemBreaks
+      ? max(options.height, measuredHeight)
+      : options.height
+    let leadingVerticalSpace = max(0, (sceneHeight - measuredHeight) / 2)
 
     var commands: [AndroidRenderCommand] = [
       rectangle(
         role: "background", x: 0, y: 0,
-        width: options.width, height: options.height,
+        width: options.width, height: sceneHeight,
         color: "#FFFFFFFF", fill: true
       )
     ]
-    let grandStaffHeight = options.lineSpacing * Double(max(staves.count * 4, 4))
-      + options.interStaffGap * Double(max(staves.count - 1, 0))
+    var systemTop = leadingVerticalSpace
+    var sceneSystems: [AndroidRenderSystem] = []
 
     for (systemIndex, layout) in layouts.enumerated() {
-      let centerY = options.height * (Double(systemIndex) + 0.5)
-        / Double(max(layouts.count, 1))
-      let firstStaffTop = centerY - grandStaffHeight / 2
+      let geometry = systemGeometries[systemIndex]
+      sceneSystems.append(AndroidRenderSystem(
+        index: systemIndex,
+        y: systemTop,
+        height: geometry.height
+      ))
+      let firstStaffTop = systemTop + geometry.firstStaffTopOffset
       let staffTops = Dictionary(
         uniqueKeysWithValues: staves.enumerated().map { index, staff in
           (
@@ -312,6 +439,7 @@ public struct AndroidScoreRenderer: Sendable {
         endX: endX,
         top: firstStaffTop
       ))
+      systemTop += geometry.height
     }
     let accessibilityFormatter = ScoreAccessibilityFormatter(
       localeIdentifier: options.accessibilityLocaleIdentifier
@@ -327,9 +455,10 @@ public struct AndroidScoreRenderer: Sendable {
     }
     return AndroidRenderScene(
       width: options.width,
-      height: options.height,
+      height: sceneHeight,
       commands: commands,
-      accessibility: accessibility
+      accessibility: accessibility,
+      systems: sceneSystems
     )
   }
 
@@ -849,6 +978,107 @@ public struct AndroidScoreRenderer: Sendable {
     return notationStart + layout.width
   }
 
+  private func makeSystemVerticalGeometries(
+    layouts: [HorizontalLayout],
+    staves: [NotationStaff],
+    stemDirections: [String: Bool],
+    spannerSegments: [SpannerSystemSegment],
+    tupletSegments: [TupletSystemSegment],
+    voltaSegments: [VoltaSystemSegment]
+  ) -> [SystemVerticalGeometry] {
+    guard !layouts.isEmpty else { return [] }
+    guard options.automaticSystemBreaks else {
+      let height = options.height / Double(layouts.count)
+      let staffStep = options.lineSpacing * 4 + options.interStaffGap
+      let staffBlockHeight = Double(max(staves.count - 1, 0)) * staffStep
+        + options.lineSpacing * 4
+      return Array(
+        repeating: SystemVerticalGeometry(
+          height: height,
+          firstStaffTopOffset: height / 2 - staffBlockHeight / 2
+        ),
+        count: layouts.count
+      )
+    }
+
+    let staffStep = options.lineSpacing * 4 + options.interStaffGap
+    let staffBlockHeight = Double(max(staves.count - 1, 0)) * staffStep
+      + options.lineSpacing * 4
+    let eventVoiceIDs = Dictionary(
+      uniqueKeysWithValues: layouts.flatMap { layout in
+        layout.events.map { ($0.input.event.id, $0.input.voiceID) }
+      }
+    )
+
+    return layouts.enumerated().map { systemIndex, layout in
+      var contentTop = 0.0
+      var contentBottom = staffBlockHeight
+
+      for positioned in layout.events {
+        let event = positioned.input.event
+        guard let staffIndex = staves.firstIndex(where: { $0.id == event.staffID }),
+          case .notes(let pitches) = event.content,
+          !pitches.isEmpty
+        else { continue }
+        let staffTop = Double(staffIndex) * staffStep
+        let positions = pitches.map { staffPosition(for: $0, clef: staves[staffIndex].clef) }
+        let noteYs = positions.map {
+          staffTop + options.lineSpacing * 4 - Double($0) * options.lineSpacing / 2
+        }
+        guard let highestNote = noteYs.min(), let lowestNote = noteYs.max() else { continue }
+        contentTop = min(contentTop, highestNote - 11)
+        contentBottom = max(contentBottom, lowestNote + 11)
+
+        if event.engravingDuration < .one {
+          let averagePosition = Double(positions.reduce(0, +)) / Double(positions.count)
+          let stemUp = stemDirections[eventVoiceIDs[event.id] ?? ""] ?? (averagePosition < 4)
+          if stemUp {
+            contentTop = min(contentTop, highestNote - options.lineSpacing * 3.8)
+          } else {
+            contentBottom = max(contentBottom, lowestNote + options.lineSpacing * 3.8)
+          }
+        }
+        for attachment in event.attachments {
+          if attachment.placement == .below {
+            contentBottom = max(contentBottom, lowestNote + 48)
+          } else {
+            contentTop = min(contentTop, highestNote - 48)
+          }
+        }
+      }
+
+      for segment in spannerSegments where segment.systemIndex == systemIndex {
+        let spanner = segment.spanner
+        if spanner.kind == .pedal || spanner.kind == .crescendo
+          || spanner.kind == .diminuendo || spanner.kind.rawValue == "hairpin.swell"
+          || spanner.placement == .below
+        {
+          contentBottom = max(contentBottom, staffBlockHeight + 58)
+        } else {
+          contentTop = min(contentTop, -34)
+        }
+      }
+      for segment in tupletSegments where segment.systemIndex == systemIndex {
+        if segment.tuplet.placement == .below {
+          contentBottom = max(contentBottom, staffBlockHeight + 38)
+        } else {
+          contentTop = min(contentTop, -38)
+        }
+      }
+      if voltaSegments.contains(where: { $0.systemIndex == systemIndex }) {
+        contentTop = min(contentTop, -52)
+      }
+
+      let outerPadding = 22.0
+      let requiredHeight = contentBottom - contentTop + outerPadding * 2
+      let height = max(options.minimumSystemHeight, requiredHeight)
+      return SystemVerticalGeometry(
+        height: height,
+        firstStaffTopOffset: (height - requiredHeight) / 2 + outerPadding - contentTop
+      )
+    }
+  }
+
   private func voiceStemDirections(_ voices: [NotationVoice]) -> [String: Bool] {
     let grouped = Dictionary(grouping: voices) { $0.events.first?.staffID ?? "" }
     var result: [String: Bool] = [:]
@@ -907,5 +1137,10 @@ public struct AndroidScoreRenderer: Sendable {
   private struct BeamLayout {
     let stems: [NotationEventID: BeamStem]
     let commands: [AndroidRenderCommand]
+  }
+
+  private struct SystemVerticalGeometry {
+    let height: Double
+    let firstStaffTopOffset: Double
   }
 }

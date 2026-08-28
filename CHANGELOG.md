@@ -11,6 +11,10 @@
   attachments, tuplets, voltas, and spanners; use the resulting geometry for
   vertical scrolling, playback following, and touch hit testing.
 - Update the Apple example to demonstrate complete-score adaptive layout.
+- Extend adaptive complete-score layout to the Android renderer and Windows
+  facade, including serialized variable-height system geometry.
+- Update the Compose viewport, Android example, and Windows CLI example to use
+  adaptive scene height for scrolling, playback following, and hit testing.
 
 ## 1.1.0 - 2026-08-28
 

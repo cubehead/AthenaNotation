@@ -78,7 +78,6 @@ class MainActivity : ComponentActivity() {
                 ScrollableAthenaNotationCanvas(
                     sceneJSON = sceneJSON,
                     bravuraTypeface = bravura,
-                    systemCount = 1,
                     touchEnabled = touchEnabled,
                     onEventTap = { eventID ->
                         selectedEventID = eventID

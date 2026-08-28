@@ -118,10 +118,12 @@ fun ScrollableAthenaNotationCanvas(
         ),
     ) {
         val aspectHeight = maxWidth * (scene.height / scene.width)
-        val contentHeight = maxOf(
-            aspectHeight,
-            minimumSystemHeight * systemCount.toFloat(),
-        )
+        val contentHeight = if (scene.systems.isNotEmpty()) {
+            // Adaptive scenes already carry the complete, variable-height geometry.
+            aspectHeight
+        } else {
+            maxOf(aspectHeight, minimumSystemHeight * systemCount.toFloat())
+        }
         val widthPixels = with(density) { maxWidth.toPx() }
         val viewportPixels = with(density) { maxHeight.toPx() }
         LaunchedEffect(scene.highlightedCenterY, widthPixels, viewportPixels) {
@@ -322,6 +324,7 @@ private data class NotationScene(
     val height: Float,
     val commands: List<DrawCommand>,
     val accessibility: List<AccessibilityElement>,
+    val systems: List<SystemGeometry>,
 ) {
     val highlightedCenterY: Float?
         get() = commands.firstOrNull { it.role == "playbackHighlight" }?.bounds()?.centerY
@@ -370,10 +373,23 @@ private data class NotationScene(
                         label = element.getString("label"),
                     )
                 } ?: emptyList(),
+                systems = root.optJSONArray("systems")?.objects()?.map { system ->
+                    SystemGeometry(
+                        index = system.getInt("index"),
+                        y = system.getDouble("y").toFloat(),
+                        height = system.getDouble("height").toFloat(),
+                    )
+                } ?: emptyList(),
             )
         }
     }
 }
+
+private data class SystemGeometry(
+    val index: Int,
+    val y: Float,
+    val height: Float,
+)
 
 private data class Bounds(val left: Float, val top: Float, val right: Float, val bottom: Float) {
     val centerY: Float get() = (top + bottom) / 2f

@@ -34,7 +34,8 @@ WebView, JavaScript renderer, or third-party MIDI runtime.
 - Accidentals, fingerings, articulations, ornaments, dynamics, hairpins, pedal
   markings, lyrics, text directions, repeats, voltas, and final barlines
 - Native SwiftUI/Canvas rendering on Apple platforms
-- Width-aware automatic system breaks with collision-aware measure fitting
+- Width-aware automatic system breaks with collision-aware measure fitting on Apple,
+  Android, and the Windows display-list facade
 - Per-system vertical sizing for ledger notes, stems, text, and spanners
 - Swift-owned engraving display lists and a Jetpack Compose Canvas adapter on Android
 - Experimental Windows SwiftPM target and platform-neutral display-list facade
@@ -153,7 +154,8 @@ let sceneJSON = try AndroidRenderBridge().renderScoreJSON(
   height: 720,
   preferredSystemCount: 2,
   playbackEventIDs: ["current-event-id"],
-  showsPlaybackCursor: true
+  showsPlaybackCursor: true,
+  automaticSystemBreaks: true
 )
 ```
 
@@ -173,6 +175,10 @@ The Compose adapter follows the Android system color scheme by default and can
 be pinned or customized with `AthenaNotationColors`.
 Its JSON scene also contains localized event labels consumed by the included
 TalkBack semantics layer.
+Adaptive scenes include ordered `systems` geometry. The Compose viewport uses
+the complete scene height for scrolling, playback following, and touch hit
+testing while preserving different heights for different systems. Pass the
+viewport's logical width to the renderer so line breaks match the actual UI.
 Set `showsPlaybackCursor: false` while retaining the playback event IDs when an
 app needs a score-only view without a cursor or playback-following scroll.
 
@@ -190,7 +196,9 @@ swift test
 ```
 
 The Windows facade emits the same deterministic JSON drawing commands used by
-the tested cross-platform renderer. Its shared options include
+the tested cross-platform renderer. It supports the same
+`automaticSystemBreaks` option and variable-height `systems` geometry for a
+future WinUI/Direct2D scrolling adapter. Its shared options also include
 `Options(showsPlaybackCursor: false)` for score-only output. See the
 [Windows support plan](Documentation/WindowsSupport.md) for the native
 WinUI/Direct2D and validation milestones.

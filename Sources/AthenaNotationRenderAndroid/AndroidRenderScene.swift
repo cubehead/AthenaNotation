@@ -7,6 +7,9 @@ public struct AndroidRenderScene: Hashable, Sendable, Codable {
   public let height: Double
   public let commands: [AndroidRenderCommand]
   public let accessibility: [AndroidAccessibilityElement]
+  /// Top-to-bottom geometry for each engraved system in scene coordinates.
+  /// Android and Windows viewports use this to preserve variable system heights.
+  public let systems: [AndroidRenderSystem]
 
   public init(
     width: Double,
@@ -14,11 +17,43 @@ public struct AndroidRenderScene: Hashable, Sendable, Codable {
     commands: [AndroidRenderCommand],
     accessibility: [AndroidAccessibilityElement] = []
   ) {
+    self.init(
+      width: width,
+      height: height,
+      commands: commands,
+      accessibility: accessibility,
+      systems: []
+    )
+  }
+
+  public init(
+    width: Double,
+    height: Double,
+    commands: [AndroidRenderCommand],
+    accessibility: [AndroidAccessibilityElement] = [],
+    systems: [AndroidRenderSystem]
+  ) {
     precondition(width > 0 && height > 0)
     self.width = width
     self.height = height
     self.commands = commands
     self.accessibility = accessibility
+    self.systems = systems
+  }
+
+  public init(from decoder: any Decoder) throws {
+    let container = try decoder.container(keyedBy: CodingKeys.self)
+    width = try container.decode(Double.self, forKey: .width)
+    height = try container.decode(Double.self, forKey: .height)
+    commands = try container.decode([AndroidRenderCommand].self, forKey: .commands)
+    accessibility = try container.decodeIfPresent(
+      [AndroidAccessibilityElement].self,
+      forKey: .accessibility
+    ) ?? []
+    systems = try container.decodeIfPresent(
+      [AndroidRenderSystem].self,
+      forKey: .systems
+    ) ?? []
   }
 
   public func jsonString(prettyPrinted: Bool = false) throws -> String {
@@ -29,6 +64,20 @@ public struct AndroidRenderScene: Hashable, Sendable, Codable {
       throw AndroidRenderSceneError.invalidUTF8
     }
     return value
+  }
+}
+
+public struct AndroidRenderSystem: Identifiable, Hashable, Sendable, Codable {
+  public var id: Int { index }
+  public let index: Int
+  public let y: Double
+  public let height: Double
+
+  public init(index: Int, y: Double, height: Double) {
+    precondition(index >= 0 && y >= 0 && height > 0)
+    self.index = index
+    self.y = y
+    self.height = height
   }
 }
 

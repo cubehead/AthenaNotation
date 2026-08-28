@@ -510,6 +510,7 @@ AthenaNotationLayout	symbol	swift.method	ChordPlanner.placements(staffPositions:
 AthenaNotationLayout	symbol	swift.method	HorizontalFormatter.format(inputs:justifyTo:)	func format(inputs: [LayoutInput], justifyTo requestedWidth: Double = 0) -> HorizontalLayout
 AthenaNotationLayout	symbol	swift.method	HorizontalFormatter.makeInputs(voices:metrics:)	func makeInputs(voices: [NotationVoice], metrics: [NotationEventID : EventLayoutMetrics] = [:]) -> [LayoutInput]
 AthenaNotationLayout	symbol	swift.method	SpannerPlanner.segments(spanners:layouts:)	func segments(spanners: [NotationSpanner], layouts: [HorizontalLayout]) -> [SpannerSystemSegment]
+AthenaNotationLayout	symbol	swift.method	SystemFormatter.format(inputs:fittingWidth:measureDuration:)	func format(inputs: [LayoutInput], fittingWidth width: Double, measureDuration: Rational? = nil) -> [HorizontalLayout]
 AthenaNotationLayout	symbol	swift.method	SystemFormatter.format(inputs:systemCount:justifyTo:measureDuration:)	func format(inputs: [LayoutInput], systemCount requestedSystemCount: Int, justifyTo width: Double, measureDuration: Rational? = nil) -> [HorizontalLayout]
 AthenaNotationLayout	symbol	swift.method	TupletPlanner.segments(tuplets:layouts:)	func segments(tuplets: [NotationTuplet], layouts: [HorizontalLayout]) -> [TupletSystemSegment]
 AthenaNotationLayout	symbol	swift.method	VoltaPlanner.segments(voltas:layouts:scoreEnd:)	func segments(voltas: [NotationVolta], layouts: [HorizontalLayout], scoreEnd: Rational) -> [VoltaSystemSegment]
@@ -622,6 +623,12 @@ AthenaNotationRenderAndroid	relationship	conformsTo	AndroidRenderSceneError	Swif
 AthenaNotationRenderAndroid	relationship	conformsTo	AndroidRenderSceneError	Swift.Error
 AthenaNotationRenderAndroid	relationship	conformsTo	AndroidRenderSceneError	Swift.Hashable
 AthenaNotationRenderAndroid	relationship	conformsTo	AndroidRenderSceneError	Swift.Sendable
+AthenaNotationRenderAndroid	relationship	conformsTo	AndroidRenderSystem	Swift.Decodable
+AthenaNotationRenderAndroid	relationship	conformsTo	AndroidRenderSystem	Swift.Encodable
+AthenaNotationRenderAndroid	relationship	conformsTo	AndroidRenderSystem	Swift.Equatable
+AthenaNotationRenderAndroid	relationship	conformsTo	AndroidRenderSystem	Swift.Hashable
+AthenaNotationRenderAndroid	relationship	conformsTo	AndroidRenderSystem	Swift.Identifiable
+AthenaNotationRenderAndroid	relationship	conformsTo	AndroidRenderSystem	Swift.Sendable
 AthenaNotationRenderAndroid	relationship	conformsTo	AndroidSMuFLGlyph	Swift.Equatable
 AthenaNotationRenderAndroid	relationship	conformsTo	AndroidSMuFLGlyph	Swift.Hashable
 AthenaNotationRenderAndroid	relationship	conformsTo	AndroidSMuFLGlyph	Swift.RawRepresentable
@@ -707,12 +714,19 @@ AthenaNotationRenderAndroid	symbol	swift.init	AndroidRenderPoint.init(from:)	ini
 AthenaNotationRenderAndroid	symbol	swift.init	AndroidRenderPoint.init(x:y:)	init(x: Double, y: Double)
 AthenaNotationRenderAndroid	symbol	swift.init	AndroidRenderScene.init(from:)	init(from decoder: any Decoder) throws
 AthenaNotationRenderAndroid	symbol	swift.init	AndroidRenderScene.init(width:height:commands:accessibility:)	init(width: Double, height: Double, commands: [AndroidRenderCommand], accessibility: [AndroidAccessibilityElement] = [])
+AthenaNotationRenderAndroid	symbol	swift.init	AndroidRenderScene.init(width:height:commands:accessibility:systems:)	init(width: Double, height: Double, commands: [AndroidRenderCommand], accessibility: [AndroidAccessibilityElement] = [], systems: [AndroidRenderSystem])
+AthenaNotationRenderAndroid	symbol	swift.init	AndroidRenderSystem.init(from:)	init(from decoder: any Decoder) throws
+AthenaNotationRenderAndroid	symbol	swift.init	AndroidRenderSystem.init(index:y:height:)	init(index: Int, y: Double, height: Double)
 AthenaNotationRenderAndroid	symbol	swift.init	AndroidSMuFLGlyph.init(rawValue:)	init?(rawValue: UInt32)
 AthenaNotationRenderAndroid	symbol	swift.init	AndroidScoreRenderer.Options.init(width:height:preferredSystemCount:horizontalPadding:lineSpacing:interStaffGap:accessibilityLocaleIdentifier:)	init(width: Double = 1_024, height: Double = 720, preferredSystemCount: Int = 1, horizontalPadding: Double = 36, lineSpacing: Double = 12, interStaffGap: Double = 48, accessibilityLocaleIdentifier: String = "en_US")
+AthenaNotationRenderAndroid	symbol	swift.init	AndroidScoreRenderer.Options.init(width:height:preferredSystemCount:horizontalPadding:lineSpacing:interStaffGap:accessibilityLocaleIdentifier:automaticSystemBreaks:minimumSystemHeight:)	init(width: Double = 1_024, height: Double = 720, preferredSystemCount: Int = 1, horizontalPadding: Double = 36, lineSpacing: Double = 12, interStaffGap: Double = 48, accessibilityLocaleIdentifier: String = "en_US", automaticSystemBreaks: Bool, minimumSystemHeight: Double = 220)
 AthenaNotationRenderAndroid	symbol	swift.init	AndroidScoreRenderer.Options.init(width:height:preferredSystemCount:horizontalPadding:lineSpacing:interStaffGap:accessibilityLocaleIdentifier:showsPlaybackCursor:)	init(width: Double = 1_024, height: Double = 720, preferredSystemCount: Int = 1, horizontalPadding: Double = 36, lineSpacing: Double = 12, interStaffGap: Double = 48, accessibilityLocaleIdentifier: String = "en_US", showsPlaybackCursor: Bool)
+AthenaNotationRenderAndroid	symbol	swift.init	AndroidScoreRenderer.Options.init(width:height:preferredSystemCount:horizontalPadding:lineSpacing:interStaffGap:accessibilityLocaleIdentifier:showsPlaybackCursor:automaticSystemBreaks:minimumSystemHeight:)	init(width: Double = 1_024, height: Double = 720, preferredSystemCount: Int = 1, horizontalPadding: Double = 36, lineSpacing: Double = 12, interStaffGap: Double = 48, accessibilityLocaleIdentifier: String = "en_US", showsPlaybackCursor: Bool, automaticSystemBreaks: Bool, minimumSystemHeight: Double = 220)
 AthenaNotationRenderAndroid	symbol	swift.init	AndroidScoreRenderer.init(options:)	init(options: AndroidScoreRenderer.Options = .init())
 AthenaNotationRenderAndroid	symbol	swift.method	AndroidRenderBridge.renderScoreJSON(_:width:height:preferredSystemCount:accessibilityLocaleIdentifier:playbackEventIDs:)	func renderScoreJSON(_ scoreJSON: String, width: Double, height: Double, preferredSystemCount: Int = 1, accessibilityLocaleIdentifier: String = "en_US", playbackEventIDs: [String] = []) throws -> String
+AthenaNotationRenderAndroid	symbol	swift.method	AndroidRenderBridge.renderScoreJSON(_:width:height:preferredSystemCount:accessibilityLocaleIdentifier:playbackEventIDs:automaticSystemBreaks:minimumSystemHeight:)	func renderScoreJSON(_ scoreJSON: String, width: Double, height: Double, preferredSystemCount: Int = 1, accessibilityLocaleIdentifier: String = "en_US", playbackEventIDs: [String] = [], automaticSystemBreaks: Bool, minimumSystemHeight: Double = 220) throws -> String
 AthenaNotationRenderAndroid	symbol	swift.method	AndroidRenderBridge.renderScoreJSON(_:width:height:preferredSystemCount:accessibilityLocaleIdentifier:playbackEventIDs:showsPlaybackCursor:)	func renderScoreJSON(_ scoreJSON: String, width: Double, height: Double, preferredSystemCount: Int = 1, accessibilityLocaleIdentifier: String = "en_US", playbackEventIDs: [String] = [], showsPlaybackCursor: Bool) throws -> String
+AthenaNotationRenderAndroid	symbol	swift.method	AndroidRenderBridge.renderScoreJSON(_:width:height:preferredSystemCount:accessibilityLocaleIdentifier:playbackEventIDs:showsPlaybackCursor:automaticSystemBreaks:minimumSystemHeight:)	func renderScoreJSON(_ scoreJSON: String, width: Double, height: Double, preferredSystemCount: Int = 1, accessibilityLocaleIdentifier: String = "en_US", playbackEventIDs: [String] = [], showsPlaybackCursor: Bool, automaticSystemBreaks: Bool, minimumSystemHeight: Double = 220) throws -> String
 AthenaNotationRenderAndroid	symbol	swift.method	AndroidRenderScene.jsonString(prettyPrinted:)	func jsonString(prettyPrinted: Bool = false) throws -> String
 AthenaNotationRenderAndroid	symbol	swift.method	AndroidScoreRenderer.render(score:playbackEventIDs:)	func render(score: NotationScore, playbackEventIDs: Set<NotationEventID> = []) -> AndroidRenderScene
 AthenaNotationRenderAndroid	symbol	swift.method	AndroidScoreRenderer.renderJSON(score:playbackEventIDs:prettyPrinted:)	func renderJSON(score: NotationScore, playbackEventIDs: Set<NotationEventID> = [], prettyPrinted: Bool = false) throws -> String
@@ -743,13 +757,20 @@ AthenaNotationRenderAndroid	symbol	swift.property	AndroidRenderPoint.y	let y: Do
 AthenaNotationRenderAndroid	symbol	swift.property	AndroidRenderScene.accessibility	let accessibility: [AndroidAccessibilityElement]
 AthenaNotationRenderAndroid	symbol	swift.property	AndroidRenderScene.commands	let commands: [AndroidRenderCommand]
 AthenaNotationRenderAndroid	symbol	swift.property	AndroidRenderScene.height	let height: Double
+AthenaNotationRenderAndroid	symbol	swift.property	AndroidRenderScene.systems	let systems: [AndroidRenderSystem]
 AthenaNotationRenderAndroid	symbol	swift.property	AndroidRenderScene.width	let width: Double
+AthenaNotationRenderAndroid	symbol	swift.property	AndroidRenderSystem.height	let height: Double
+AthenaNotationRenderAndroid	symbol	swift.property	AndroidRenderSystem.id	var id: Int { get }
+AthenaNotationRenderAndroid	symbol	swift.property	AndroidRenderSystem.index	let index: Int
+AthenaNotationRenderAndroid	symbol	swift.property	AndroidRenderSystem.y	let y: Double
 AthenaNotationRenderAndroid	symbol	swift.property	AndroidSMuFLGlyph.character	var character: String { get }
 AthenaNotationRenderAndroid	symbol	swift.property	AndroidScoreRenderer.Options.accessibilityLocaleIdentifier	var accessibilityLocaleIdentifier: String
+AthenaNotationRenderAndroid	symbol	swift.property	AndroidScoreRenderer.Options.automaticSystemBreaks	var automaticSystemBreaks: Bool
 AthenaNotationRenderAndroid	symbol	swift.property	AndroidScoreRenderer.Options.height	var height: Double
 AthenaNotationRenderAndroid	symbol	swift.property	AndroidScoreRenderer.Options.horizontalPadding	var horizontalPadding: Double
 AthenaNotationRenderAndroid	symbol	swift.property	AndroidScoreRenderer.Options.interStaffGap	var interStaffGap: Double
 AthenaNotationRenderAndroid	symbol	swift.property	AndroidScoreRenderer.Options.lineSpacing	var lineSpacing: Double
+AthenaNotationRenderAndroid	symbol	swift.property	AndroidScoreRenderer.Options.minimumSystemHeight	var minimumSystemHeight: Double
 AthenaNotationRenderAndroid	symbol	swift.property	AndroidScoreRenderer.Options.preferredSystemCount	var preferredSystemCount: Int
 AthenaNotationRenderAndroid	symbol	swift.property	AndroidScoreRenderer.Options.showsPlaybackCursor	var showsPlaybackCursor: Bool
 AthenaNotationRenderAndroid	symbol	swift.property	AndroidScoreRenderer.Options.width	var width: Double
@@ -760,6 +781,7 @@ AthenaNotationRenderAndroid	symbol	swift.struct	AndroidRenderBridge	struct Andro
 AthenaNotationRenderAndroid	symbol	swift.struct	AndroidRenderCommand	struct AndroidRenderCommand
 AthenaNotationRenderAndroid	symbol	swift.struct	AndroidRenderPoint	struct AndroidRenderPoint
 AthenaNotationRenderAndroid	symbol	swift.struct	AndroidRenderScene	struct AndroidRenderScene
+AthenaNotationRenderAndroid	symbol	swift.struct	AndroidRenderSystem	struct AndroidRenderSystem
 AthenaNotationRenderAndroid	symbol	swift.struct	AndroidScoreRenderer	struct AndroidScoreRenderer
 AthenaNotationRenderAndroid	symbol	swift.struct	AndroidScoreRenderer.Options	struct Options
 AthenaNotationRenderAndroid	symbol	swift.type.method	AndroidSMuFLGlyph.accidental(_:)	static func accidental(_ value: AccidentalKind) -> AndroidSMuFLGlyph?
@@ -845,7 +867,9 @@ AthenaNotationRenderApple	symbol	swift.init	ScrollableNativeScorePreview.init(sc
 AthenaNotationRenderApple	symbol	swift.init	ScrollableNativeScorePreview.init(score:playbackEventID:preferredSystemCount:minimumSystemHeight:theme:interactionOptions:onInteraction:onEventTap:)	@MainActor init(score: NotationScore, playbackEventID: NotationEventID? = nil, preferredSystemCount: Int = 1, minimumSystemHeight: CGFloat = 310, theme: NativeScoreTheme? = nil, interactionOptions: NativeScoreInteractionOptions, onInteraction: NativeScoreInteractionHandler? = nil, onEventTap: ((NotationEventID) -> Void)? = nil)
 AthenaNotationRenderApple	symbol	swift.init	ScrollableNativeScorePreview.init(score:playbackEventIDs:preferredSystemCount:minimumSystemHeight:theme:)	@MainActor init(score: NotationScore, playbackEventIDs: Set<NotationEventID>, preferredSystemCount: Int = 1, minimumSystemHeight: CGFloat = 310, theme: NativeScoreTheme? = nil)
 AthenaNotationRenderApple	symbol	swift.init	ScrollableNativeScorePreview.init(score:playbackEventIDs:preferredSystemCount:minimumSystemHeight:theme:interactionOptions:onInteraction:onEventTap:)	@MainActor init(score: NotationScore, playbackEventIDs: Set<NotationEventID>, preferredSystemCount: Int = 1, minimumSystemHeight: CGFloat = 310, theme: NativeScoreTheme? = nil, interactionOptions: NativeScoreInteractionOptions, onInteraction: NativeScoreInteractionHandler? = nil, onEventTap: ((NotationEventID) -> Void)? = nil)
+AthenaNotationRenderApple	symbol	swift.method	NativeScorePreview.automaticSystemBreaks(_:)	@MainActor func automaticSystemBreaks(_ isEnabled: Bool = true) -> NativeScorePreview
 AthenaNotationRenderApple	symbol	swift.method	NativeScorePreview.playbackCursorVisible(_:)	@MainActor func playbackCursorVisible(_ isVisible: Bool) -> NativeScorePreview
+AthenaNotationRenderApple	symbol	swift.method	ScrollableNativeScorePreview.automaticSystemBreaks(_:)	@MainActor func automaticSystemBreaks(_ isEnabled: Bool = true) -> ScrollableNativeScorePreview
 AthenaNotationRenderApple	symbol	swift.method	ScrollableNativeScorePreview.playbackCursorVisible(_:)	@MainActor func playbackCursorVisible(_ isVisible: Bool) -> ScrollableNativeScorePreview
 AthenaNotationRenderApple	symbol	swift.property	BravuraGlyphMetrics.advance	let advance: CGSize
 AthenaNotationRenderApple	symbol	swift.property	BravuraGlyphMetrics.bounds	let bounds: CGRect

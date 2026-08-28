@@ -72,7 +72,6 @@ val bravura = ResourcesCompat.getFont(
 ScrollableAthenaNotationCanvas(
     sceneJSON,
     bravura,
-    systemCount = 1,
     touchEnabled = allowTouch,
     onEventTap = { eventID ->
         sceneJSON = notation.renderMusicXMLAtEvent(musicXMLText, eventID)
@@ -81,9 +80,10 @@ ScrollableAthenaNotationCanvas(
 )
 ```
 
-The scrollable composable fits notation to the available width and preserves
-its vertical spacing. A short window scrolls the score instead of scaling the
-staff down. It also scrolls the active playback highlight into view.
+The bridge renders with automatic system breaks. Its JSON includes every
+system's variable-height geometry; the scrollable composable fits notation to
+the available width and preserves that spacing. A short window scrolls the
+complete score and keeps the active playback highlight in view.
 The example includes a separate cursor-visibility switch; hiding the cursor
 keeps the selected playback event and touch-to-seek state intact.
 
