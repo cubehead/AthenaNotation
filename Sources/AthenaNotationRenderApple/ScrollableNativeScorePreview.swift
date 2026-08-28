@@ -173,24 +173,30 @@ public struct ScrollableNativeScorePreview: View {
         .scrollBounceBehavior(.basedOnSize)
         .background(resolvedTheme.background)
         .onPreferenceChange(NativeScoreSystemCountPreferenceKey.self) { measuredCount in
-          guard automaticallyBreaksSystems else { return }
-          let count = max(measuredCount, 1)
-          if automaticallyMeasuredSystemCount != count {
-            automaticallyMeasuredSystemCount = count
+          MainActor.assumeIsolated {
+            guard automaticallyBreaksSystems else { return }
+            let count = max(measuredCount, 1)
+            if automaticallyMeasuredSystemCount != count {
+              automaticallyMeasuredSystemCount = count
+            }
           }
         }
         .onPreferenceChange(NativeScoreSystemHeightsPreferenceKey.self) { measuredHeights in
-          guard automaticallyBreaksSystems, !measuredHeights.isEmpty else { return }
-          if automaticallyMeasuredSystemHeights != measuredHeights {
-            automaticallyMeasuredSystemHeights = measuredHeights
+          MainActor.assumeIsolated {
+            guard automaticallyBreaksSystems, !measuredHeights.isEmpty else { return }
+            if automaticallyMeasuredSystemHeights != measuredHeights {
+              automaticallyMeasuredSystemHeights = measuredHeights
+            }
           }
         }
         .onPreferenceChange(NativeScorePlaybackSystemPreferenceKey.self) { systemIndex in
-          guard let systemIndex else { return }
-          scrollProxy.scrollTo(
-            ScoreSystemScrollAnchor(index: systemIndex),
-            anchor: .center
-          )
+          MainActor.assumeIsolated {
+            guard let systemIndex else { return }
+            scrollProxy.scrollTo(
+              ScoreSystemScrollAnchor(index: systemIndex),
+              anchor: .center
+            )
+          }
         }
       }
     }
