@@ -11,7 +11,6 @@ import SwiftUI
 @available(iOS 17.0, macOS 15.0, *)
 public struct ScrollableNativeScorePreview: View {
   @Environment(\.colorScheme) private var colorScheme
-  @State private var lastAutoScrolledSystem: Int?
 
   private let score: NotationScore
   private let playbackEventIDs: Set<NotationEventID>
@@ -147,14 +146,11 @@ public struct ScrollableNativeScorePreview: View {
         .scrollBounceBehavior(.basedOnSize)
         .background(resolvedTheme.background)
         .onPreferenceChange(NativeScorePlaybackSystemPreferenceKey.self) { systemIndex in
-          guard let systemIndex, systemIndex != lastAutoScrolledSystem else { return }
-          lastAutoScrolledSystem = systemIndex
-          withAnimation(.easeInOut(duration: 0.24)) {
-            scrollProxy.scrollTo(
-              ScoreSystemScrollAnchor(index: systemIndex),
-              anchor: .center
-            )
-          }
+          guard let systemIndex else { return }
+          scrollProxy.scrollTo(
+            ScoreSystemScrollAnchor(index: systemIndex),
+            anchor: .center
+          )
         }
       }
     }

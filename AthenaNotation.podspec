@@ -19,6 +19,7 @@ Pod::Spec.new do |spec|
   spec.osx.deployment_target = '15.0'
   spec.swift_version = '6.0'
   spec.source_files = 'Sources/**/*.swift'
+  spec.exclude_files = 'Sources/AthenaNotationRenderWindows/**/*.swift'
   spec.frameworks = 'CoreText', 'Foundation', 'SwiftUI'
   spec.resource_bundles = {
     'AthenaNotationResources' => [
