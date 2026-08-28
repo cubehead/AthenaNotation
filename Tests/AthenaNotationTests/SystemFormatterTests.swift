@@ -3,6 +3,65 @@ import AthenaNotationLayout
 import XCTest
 
 final class SystemFormatterTests: XCTestCase {
+  func testAutomaticBreaksUseActualEngravingWidthAndKeepEveryEvent() {
+    let inputs = (0..<12).map { index in
+      LayoutInput(
+        event: event("event-\(index)"),
+        voiceID: "voice",
+        onset: Rational(Int64(index), 4),
+        metrics: EventLayoutMetrics(noteWidth: 16, leftExtent: 2, rightExtent: 18)
+      )
+    }
+
+    let systems = SystemFormatter().format(
+      inputs: inputs,
+      fittingWidth: 180,
+      measureDuration: .one
+    )
+
+    XCTAssertGreaterThan(systems.count, 1)
+    XCTAssertEqual(systems.flatMap(\.events).count, inputs.count)
+    XCTAssertTrue(systems.allSatisfy { $0.minimumWidth <= 180 })
+  }
+
+  func testAutomaticBreaksDoNotImposeMeasuresPerSystemLimit() {
+    let inputs = (0..<20).map { index in
+      LayoutInput(
+        event: event("event-\(index)"),
+        voiceID: "voice",
+        onset: Rational(Int64(index), 4),
+        metrics: EventLayoutMetrics(noteWidth: 4)
+      )
+    }
+
+    let systems = SystemFormatter().format(
+      inputs: inputs,
+      fittingWidth: 1_000,
+      measureDuration: .one
+    )
+
+    XCTAssertEqual(systems.count, 1)
+  }
+
+  func testAutomaticBreaksPreferMeasureBoundaryBeforeOverflow() throws {
+    let inputs = (0..<9).map { index in
+      LayoutInput(
+        event: event("event-\(index)"),
+        voiceID: "voice",
+        onset: Rational(Int64(index), 4),
+        metrics: EventLayoutMetrics(noteWidth: 20, leftExtent: 2, rightExtent: 10)
+      )
+    }
+
+    let systems = SystemFormatter().format(
+      inputs: inputs,
+      fittingWidth: 190,
+      measureDuration: .one
+    )
+
+    XCTAssertEqual(try XCTUnwrap(systems.dropFirst().first?.contexts.first?.onset), .one)
+  }
+
   func testBalancesContextsAcrossTwoSystems() {
     let inputs = (0..<5).map { index in
       LayoutInput(

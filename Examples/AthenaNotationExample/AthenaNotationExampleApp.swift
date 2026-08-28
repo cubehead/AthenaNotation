@@ -113,10 +113,10 @@ private struct ExampleScoreView: View {
         ScrollableNativeScorePreview(
           score: score,
           playbackEventIDs: selectedEventID.map { [$0] } ?? [],
-          preferredSystemCount: 2,
           interactionOptions: isScoreTouchEnabled ? .default : [],
           onInteraction: handleScoreInteraction
         )
+        .automaticSystemBreaks()
         .playbackCursorVisible(showsPlaybackCursor)
         .padding(24)
         .background(Color.white)

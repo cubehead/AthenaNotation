@@ -4,6 +4,13 @@
 
 - Add an independent playback-cursor visibility policy for Apple, Android, and
   Windows rendering, including matching example controls and Android JNI APIs.
+- Add width-aware automatic system breaks that use engraving collision extents,
+  prefer measure boundaries, split dense measures when necessary, and lay out
+  the complete score without a fixed measures-per-line limit.
+- Measure each Apple-rendered system independently for ledger notes, stems,
+  attachments, tuplets, voltas, and spanners; use the resulting geometry for
+  vertical scrolling, playback following, and touch hit testing.
+- Update the Apple example to demonstrate complete-score adaptive layout.
 
 ## 1.1.0 - 2026-08-28
 

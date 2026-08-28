@@ -33,6 +33,8 @@ AthenaNotation 提供乐谱语义模型、排版、SwiftUI 渲染、MusicXML/MID
 - 升降号、指法、奏法、装饰音、力度、渐强渐弱、踏板、歌词、文字方向、重复、
   Volta 和终止线
 - Apple 端基于 SwiftUI、Canvas 和 Bravura SMuFL 字体的原生渲染
+- 按可用宽度与碰撞边界自动换行，不固定每行小节数
+- 根据加线音符、符杆、文字和跨音符记号，为每行谱表独立计算高度
 - Android 端由 Swift 生成雕版绘制列表，Jetpack Compose Canvas 原生执行
 - 实验性 Windows SwiftPM 目标和平台无关绘制列表入口
 - MusicXML `score-partwise` 导入
@@ -196,16 +198,22 @@ let imported = try MusicXMLImporter().parse(data: musicXMLData)
 struct ScoreView: View {
   var body: some View {
     ScrollableNativeScorePreview(
-      score: imported.score,
-      preferredSystemCount: 2
+      score: imported.score
     )
+    .automaticSystemBreaks()
   }
 }
 ```
 
-`ScrollableNativeScorePreview` 会为每一行谱表保留可读的最小高度；当显示区域
-小于乐谱画布时，它会改为纵向滚动。只有当外层视图已经负责管理乐谱画布尺寸时，
-才需要直接使用 `NativeScorePreview`。
+启用 `automaticSystemBreaks()` 后，排版会按真实可用宽度和符号碰撞范围决定换行，
+不再限制每行小节数；它优先在小节边界换行，遇到过密小节时也可以在小节内部拆分，
+并持续排版到完整乐谱结束。每行谱表会根据加线音符、符杆、附属文字、Tuplet、
+Volta 和跨音符记号独立预留垂直空间；`ScrollableNativeScorePreview` 再按这些实际
+高度提供纵向滚动。
+
+如果调用方确实需要固定行数，可以不添加 `automaticSystemBreaks()`，继续使用
+`preferredSystemCount`。只有当外层视图已经负责管理乐谱画布尺寸时，才需要直接
+使用 `NativeScorePreview`。
 
 Apple 端两个渲染视图默认都会跟随 SwiftUI 的浅色/暗色环境。需要固定主题时，
 可传入 `theme: .light` 或 `theme: .dark`；也可通过 `NativeScoreTheme` 自定义背景色、
@@ -227,11 +235,14 @@ ScrollableNativeScorePreview(
     seek(to: entry?.onset)
   }
 )
+.automaticSystemBreaks()
 .playbackCursorVisible(showsPlaybackCursor)
 ```
 
 将该修饰器设为 `false` 后，应用仍可保留和更新播放事件 ID，但不会绘制光标，也
 不会自动跟随播放位置滚动，适合只负责展示乐谱而不提供播放控制的页面。
+自动跟随和触摸命中会共用同一套实际谱表行几何信息，因此不同高度的谱表行也能
+正确定位。
 
 `ScorePlaybackEventPlanner` 会生成与平台和设备无关的统一事件载荷，其中包括当前
 速度、光标事件、正在发声的乐谱事件、MIDI 音高、力度/踏板状态，以及本帧的

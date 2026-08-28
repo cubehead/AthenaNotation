@@ -17,6 +17,23 @@ struct NativeScorePlaybackSystemPreferenceKey: PreferenceKey {
   }
 }
 
+struct NativeScoreSystemCountPreferenceKey: PreferenceKey {
+  static let defaultValue = 1
+
+  static func reduce(value: inout Int, nextValue: () -> Int) {
+    value = max(value, nextValue())
+  }
+}
+
+struct NativeScoreSystemHeightsPreferenceKey: PreferenceKey {
+  static let defaultValue: [Double] = []
+
+  static func reduce(value: inout [Double], nextValue: () -> [Double]) {
+    let next = nextValue()
+    if !next.isEmpty { value = next }
+  }
+}
+
 /// Native Apple renderer for the current VexFlow-to-Swift port subset.
 @available(iOS 17.0, macOS 15.0, *)
 public struct NativeScorePreview: View {
@@ -26,6 +43,8 @@ public struct NativeScorePreview: View {
   private let score: NotationScore
   private let playbackEventIDs: Set<NotationEventID>
   private var showsPlaybackCursor = true
+  private var automaticallyBreaksSystems = false
+  private var automaticMinimumSystemHeight = 220.0
   private let preferredSystemCount: Int
   private let theme: NativeScoreTheme?
   private let interactionOptions: NativeScoreInteractionOptions
@@ -162,12 +181,20 @@ public struct NativeScorePreview: View {
       )
       let metrics = layoutMetrics(for: score.voices, visibleAccidentals: visibleAccidentals)
       let inputs = formatter.makeInputs(voices: score.voices, metrics: metrics)
-      let layouts = SystemFormatter(horizontalFormatter: formatter).format(
-        inputs: inputs,
-        systemCount: preferredSystemCount,
-        justifyTo: availableWidth,
-        measureDuration: measureDuration
-      )
+      let systemFormatter = SystemFormatter(horizontalFormatter: formatter)
+      let layouts =
+        automaticallyBreaksSystems
+        ? systemFormatter.format(
+          inputs: inputs,
+          fittingWidth: availableWidth,
+          measureDuration: measureDuration
+        )
+        : systemFormatter.format(
+          inputs: inputs,
+          systemCount: preferredSystemCount,
+          justifyTo: availableWidth,
+          measureDuration: measureDuration
+        )
       let playbackSystemIndex = showsPlaybackCursor
         ? layouts.firstIndex { layout in
           layout.events.contains { playbackEventIDs.contains($0.input.event.id) }
@@ -182,15 +209,24 @@ public struct NativeScorePreview: View {
         scoreEnd: scoreDuration
       )
       let stemDirections = voiceStemDirections
+      let systemGeometries = makeSystemVerticalGeometries(
+        layouts: layouts,
+        staves: staves,
+        spannerSegments: spannerSegments,
+        tupletSegments: tupletSegments,
+        voltaSegments: voltaSegments,
+        stemDirections: stemDirections,
+        canvasHeight: proxy.size.height
+      )
+      let measuredHeight = systemGeometries.reduce(0) { $0 + $1.height }
 
       Canvas { context, size in
         let lineSpacing = 12.0
         let interStaffGap = 48.0
-        let grandStaffHeight = lineSpacing * 8 + interStaffGap
+        var systemTop = max(0, (size.height - measuredHeight) / 2)
         for (systemIndex, layout) in layouts.enumerated() {
-          let centerY =
-            size.height * (Double(systemIndex) + 0.5) / Double(max(layouts.count, 1))
-          let firstStaffTop = centerY - grandStaffHeight / 2
+          let geometry = systemGeometries[systemIndex]
+          let firstStaffTop = systemTop + geometry.firstStaffTopOffset
           let staffTops = Dictionary(
             uniqueKeysWithValues: staves.enumerated().map { index, staff in
               (staff.id, firstStaffTop + Double(index) * (lineSpacing * 4 + interStaffGap))
@@ -320,12 +356,21 @@ public struct NativeScorePreview: View {
             lineSpacing: lineSpacing,
             in: &context
           )
+          systemTop += geometry.height
         }
       }
       .background(resolvedTheme.background)
       .preference(
         key: NativeScorePlaybackSystemPreferenceKey.self,
         value: playbackSystemIndex
+      )
+      .preference(
+        key: NativeScoreSystemCountPreferenceKey.self,
+        value: max(layouts.count, 1)
+      )
+      .preference(
+        key: NativeScoreSystemHeightsPreferenceKey.self,
+        value: systemGeometries.map(\.height)
       )
       .contentShape(Rectangle())
       .gesture(
@@ -336,7 +381,8 @@ public struct NativeScorePreview: View {
               nearest: tap.location,
               canvasSize: proxy.size,
               notationStart: notationStart,
-              layouts: layouts
+              layouts: layouts,
+              systemGeometries: systemGeometries
             )
           else { return }
           onInteraction?(interaction)
@@ -367,6 +413,21 @@ public struct NativeScorePreview: View {
     return copy
   }
 
+  /// Uses collision-aware engraving width to create systems until the complete
+  /// score has been laid out. Measure boundaries are preferred but never fixed.
+  public func automaticSystemBreaks(_ isEnabled: Bool = true) -> Self {
+    var copy = self
+    copy.automaticallyBreaksSystems = isEnabled
+    return copy
+  }
+
+  func automaticMinimumSystemHeight(_ height: Double) -> Self {
+    precondition(height > 0)
+    var copy = self
+    copy.automaticMinimumSystemHeight = height
+    return copy
+  }
+
   private var resolvedTheme: NativeScoreTheme {
     theme ?? (colorScheme == .dark ? .dark : .light)
   }
@@ -375,12 +436,23 @@ public struct NativeScorePreview: View {
     nearest location: CGPoint,
     canvasSize: CGSize,
     notationStart: Double,
-    layouts: [HorizontalLayout]
+    layouts: [HorizontalLayout],
+    systemGeometries: [SystemVerticalGeometry]
   ) -> NativeScoreInteractionEvent? {
-    guard !layouts.isEmpty, canvasSize.height > 0 else { return nil }
-    let systemHeight = canvasSize.height / CGFloat(layouts.count)
-    let rawSystemIndex = Int(floor(location.y / max(systemHeight, 1)))
-    let systemIndex = min(max(0, rawSystemIndex), layouts.count - 1)
+    guard !layouts.isEmpty, canvasSize.height > 0, layouts.count == systemGeometries.count
+    else { return nil }
+    let measuredHeight = systemGeometries.reduce(0) { $0 + $1.height }
+    let topInset = max(0, (Double(canvasSize.height) - measuredHeight) / 2)
+    let localY = max(0, Double(location.y) - topInset)
+    var boundary = 0.0
+    var systemIndex = systemGeometries.count - 1
+    for (index, geometry) in systemGeometries.enumerated() {
+      boundary += geometry.height
+      if localY < boundary {
+        systemIndex = index
+        break
+      }
+    }
     let targetX = Double(location.x) - notationStart
 
     guard let eventID = layouts[systemIndex].events.min(by: { lhs, rhs in
@@ -417,6 +489,107 @@ public struct NativeScorePreview: View {
       }
     }
     return result
+  }
+
+  private func makeSystemVerticalGeometries(
+    layouts: [HorizontalLayout],
+    staves: [NotationStaff],
+    spannerSegments: [SpannerSystemSegment],
+    tupletSegments: [TupletSystemSegment],
+    voltaSegments: [VoltaSystemSegment],
+    stemDirections: [String: Bool],
+    canvasHeight: Double
+  ) -> [SystemVerticalGeometry] {
+    guard !layouts.isEmpty else { return [] }
+    guard automaticallyBreaksSystems else {
+      let height = canvasHeight / Double(layouts.count)
+      let legacyGrandStaffHeight = 12.0 * 8 + 48
+      return Array(
+        repeating: SystemVerticalGeometry(
+          height: height,
+          firstStaffTopOffset: height / 2 - legacyGrandStaffHeight / 2
+        ),
+        count: layouts.count
+      )
+    }
+
+    let lineSpacing = 12.0
+    let staffStep = lineSpacing * 4 + 48
+    let staffBlockHeight = Double(max(staves.count - 1, 0)) * staffStep + lineSpacing * 4
+    let eventVoiceIDs = Dictionary(
+      uniqueKeysWithValues: layouts.flatMap { layout in
+        layout.events.map { ($0.input.event.id, $0.input.voiceID) }
+      })
+
+    return layouts.enumerated().map { systemIndex, layout in
+      var contentTop = 0.0
+      var contentBottom = staffBlockHeight
+
+      for positioned in layout.events {
+        let event = positioned.input.event
+        guard let staffIndex = staves.firstIndex(where: { $0.id == event.staffID }) else {
+          continue
+        }
+        let staffTop = Double(staffIndex) * staffStep
+        guard case .notes(let pitches) = event.content, !pitches.isEmpty else { continue }
+        let positions = pitches.map { staffPosition(for: $0, clef: staves[staffIndex].clef) }
+        let noteYs = positions.map {
+          staffTop + lineSpacing * 4 - Double($0) * lineSpacing / 2
+        }
+        guard let highestNote = noteYs.min(), let lowestNote = noteYs.max() else { continue }
+        contentTop = min(contentTop, highestNote - 11)
+        contentBottom = max(contentBottom, lowestNote + 11)
+
+        if event.engravingDuration < .one {
+          let averagePosition = Double(positions.reduce(0, +)) / Double(positions.count)
+          let stemUp = stemDirections[eventVoiceIDs[event.id] ?? ""] ?? (averagePosition < 4)
+          if stemUp {
+            contentTop = min(contentTop, highestNote - lineSpacing * 3.8)
+          } else {
+            contentBottom = max(contentBottom, lowestNote + lineSpacing * 3.8)
+          }
+        }
+
+        for attachment in event.attachments {
+          if attachment.placement == .below {
+            contentBottom = max(contentBottom, lowestNote + 48)
+          } else {
+            contentTop = min(contentTop, highestNote - 48)
+          }
+        }
+      }
+
+      for segment in spannerSegments where segment.systemIndex == systemIndex {
+        let spanner = segment.spanner
+        if spanner.kind == .pedal || spanner.kind == .crescendo
+          || spanner.kind == .diminuendo || spanner.kind.rawValue == "hairpin.swell"
+          || spanner.placement == .below
+        {
+          contentBottom = max(contentBottom, staffBlockHeight + 58)
+        } else {
+          contentTop = min(contentTop, -34)
+        }
+      }
+      for segment in tupletSegments where segment.systemIndex == systemIndex {
+        if segment.tuplet.placement == .below {
+          contentBottom = max(contentBottom, staffBlockHeight + 38)
+        } else {
+          contentTop = min(contentTop, -38)
+        }
+      }
+      if voltaSegments.contains(where: { $0.systemIndex == systemIndex }) {
+        contentTop = min(contentTop, -52)
+      }
+
+      let outerPadding = 22.0
+      let requiredHeight = contentBottom - contentTop + outerPadding * 2
+      let height = max(automaticMinimumSystemHeight, requiredHeight)
+      let flexiblePadding = (height - requiredHeight) / 2
+      return SystemVerticalGeometry(
+        height: height,
+        firstStaffTopOffset: flexiblePadding + outerPadding - contentTop
+      )
+    }
   }
 
   private func layoutMetrics(
@@ -1518,6 +1691,11 @@ public struct NativeScorePreview: View {
   private struct BeamStemOverride {
     let isUp: Bool
     let endY: Double
+  }
+
+  private struct SystemVerticalGeometry {
+    let height: Double
+    let firstStaffTopOffset: Double
   }
 
   private struct BeamNode {

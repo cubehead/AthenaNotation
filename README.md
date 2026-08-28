@@ -34,6 +34,8 @@ WebView, JavaScript renderer, or third-party MIDI runtime.
 - Accidentals, fingerings, articulations, ornaments, dynamics, hairpins, pedal
   markings, lyrics, text directions, repeats, voltas, and final barlines
 - Native SwiftUI/Canvas rendering on Apple platforms
+- Width-aware automatic system breaks with collision-aware measure fitting
+- Per-system vertical sizing for ledger notes, stems, text, and spanners
 - Swift-owned engraving display lists and a Jetpack Compose Canvas adapter on Android
 - Experimental Windows SwiftPM target and platform-neutral display-list facade
 - MusicXML `score-partwise` import
@@ -207,17 +209,24 @@ let imported = try MusicXMLImporter().parse(data: musicXMLData)
 struct ScoreView: View {
   var body: some View {
     ScrollableNativeScorePreview(
-      score: imported.score,
-      preferredSystemCount: 2
+      score: imported.score
     )
+    .automaticSystemBreaks()
   }
 }
 ```
 
-`ScrollableNativeScorePreview` preserves a readable minimum height for every
-system and scrolls vertically when its viewport is shorter than the score.
-Use `NativeScorePreview` directly only when the containing view already owns
-the notation canvas size.
+With `automaticSystemBreaks()`, engraving uses the actual available width and
+collision extents instead of a fixed number of measures per line. It prefers
+measure boundaries, can split a dense measure when required, and continues
+until the complete score has been laid out. Each system independently reserves
+the vertical space required by ledger notes, stems, attachments, tuplets,
+voltas, and spanners. `ScrollableNativeScorePreview` then scrolls through the
+result using those measured heights.
+
+Omit `automaticSystemBreaks()` when a caller intentionally wants the fixed
+`preferredSystemCount` layout. Use `NativeScorePreview` directly only when the
+containing view already owns the notation canvas size.
 
 Both Apple render views follow the SwiftUI color scheme automatically. To pin
 the notation to a specific palette, pass `theme: .light` or `theme: .dark`;
@@ -240,12 +249,15 @@ ScrollableNativeScorePreview(
     seek(to: entry?.onset)
   }
 )
+.automaticSystemBreaks()
 .playbackCursorVisible(showsPlaybackCursor)
 ```
 
 Setting the modifier to `false` keeps playback event IDs available to the app,
 but removes the cursor and disables automatic playback-following scroll. This
 is useful for score-reading screens that do not expose a transport.
+Automatic following and touch hit testing use the same measured system
+geometry, including scores whose systems have different heights.
 
 `ScorePlaybackEventPlanner` creates one platform- and device-independent event
 payload. It includes tempo, cursor IDs, active notation events, active MIDI note

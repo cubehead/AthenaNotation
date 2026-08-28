@@ -11,10 +11,13 @@ import SwiftUI
 @available(iOS 17.0, macOS 15.0, *)
 public struct ScrollableNativeScorePreview: View {
   @Environment(\.colorScheme) private var colorScheme
+  @State private var automaticallyMeasuredSystemCount: Int?
+  @State private var automaticallyMeasuredSystemHeights: [Double]?
 
   private let score: NotationScore
   private let playbackEventIDs: Set<NotationEventID>
   private var showsPlaybackCursor = true
+  private var automaticallyBreaksSystems = false
   private let preferredSystemCount: Int
   private let minimumSystemHeight: CGFloat
   private let theme: NativeScoreTheme?
@@ -106,10 +109,29 @@ public struct ScrollableNativeScorePreview: View {
 
   public var body: some View {
     GeometryReader { viewport in
+      let systemCount = automaticallyBreaksSystems
+        ? automaticallyMeasuredSystemHeights?.count
+          ?? automaticallyMeasuredSystemCount ?? preferredSystemCount
+        : preferredSystemCount
+      let intrinsicSystemHeights: [CGFloat] = {
+        if automaticallyBreaksSystems,
+          let measured = automaticallyMeasuredSystemHeights,
+          measured.count == systemCount
+        {
+          return measured.map { max(CGFloat($0), minimumSystemHeight) }
+        }
+        return Array(repeating: minimumSystemHeight, count: systemCount)
+      }()
+      let intrinsicContentHeight = intrinsicSystemHeights.reduce(0, +)
       let contentHeight = max(
         viewport.size.height,
-        CGFloat(preferredSystemCount) * minimumSystemHeight
+        intrinsicContentHeight
       )
+      let systemHeights = automaticallyBreaksSystems
+        ? intrinsicSystemHeights
+        : Array(repeating: contentHeight / CGFloat(systemCount), count: systemCount)
+      let automaticTopInset = automaticallyBreaksSystems
+        ? max(0, (contentHeight - intrinsicContentHeight) / 2) : 0
 
       ScrollViewReader { scrollProxy in
         ScrollView(.vertical) {
@@ -124,14 +146,17 @@ public struct ScrollableNativeScorePreview: View {
               onEventTap: onEventTap
             )
             .playbackCursorVisible(showsPlaybackCursor)
+            .automaticSystemBreaks(automaticallyBreaksSystems)
+            .automaticMinimumSystemHeight(Double(minimumSystemHeight))
             .frame(width: viewport.size.width, height: contentHeight)
 
             VStack(spacing: 0) {
-              ForEach(0..<preferredSystemCount, id: \.self) { systemIndex in
+              Color.clear.frame(width: 1, height: automaticTopInset)
+              ForEach(0..<systemCount, id: \.self) { systemIndex in
                 Color.clear
                   .frame(
                     width: 1,
-                    height: contentHeight / CGFloat(preferredSystemCount)
+                    height: systemHeights[systemIndex]
                   )
                   .id(ScoreSystemScrollAnchor(index: systemIndex))
               }
@@ -147,6 +172,19 @@ public struct ScrollableNativeScorePreview: View {
         .scrollIndicators(.visible)
         .scrollBounceBehavior(.basedOnSize)
         .background(resolvedTheme.background)
+        .onPreferenceChange(NativeScoreSystemCountPreferenceKey.self) { measuredCount in
+          guard automaticallyBreaksSystems else { return }
+          let count = max(measuredCount, 1)
+          if automaticallyMeasuredSystemCount != count {
+            automaticallyMeasuredSystemCount = count
+          }
+        }
+        .onPreferenceChange(NativeScoreSystemHeightsPreferenceKey.self) { measuredHeights in
+          guard automaticallyBreaksSystems, !measuredHeights.isEmpty else { return }
+          if automaticallyMeasuredSystemHeights != measuredHeights {
+            automaticallyMeasuredSystemHeights = measuredHeights
+          }
+        }
         .onPreferenceChange(NativeScorePlaybackSystemPreferenceKey.self) { systemIndex in
           guard let systemIndex else { return }
           scrollProxy.scrollTo(
@@ -164,6 +202,14 @@ public struct ScrollableNativeScorePreview: View {
   public func playbackCursorVisible(_ isVisible: Bool) -> Self {
     var copy = self
     copy.showsPlaybackCursor = isVisible
+    return copy
+  }
+
+  /// Measures the score's engraving at the current viewport width and creates
+  /// as many vertically scrollable systems as the complete score requires.
+  public func automaticSystemBreaks(_ isEnabled: Bool = true) -> Self {
+    var copy = self
+    copy.automaticallyBreaksSystems = isEnabled
     return copy
   }
 

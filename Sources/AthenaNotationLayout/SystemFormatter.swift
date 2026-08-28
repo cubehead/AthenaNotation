@@ -39,6 +39,66 @@ public struct SystemFormatter: Sendable {
     return systems.map { horizontalFormatter.format(inputs: $0, justifyTo: width) }
   }
 
+  /// Breaks a complete score into as many systems as its engraved width requires.
+  ///
+  /// This overload does not impose a measures-per-system limit. It greedily fits
+  /// collision-aware tick contexts into the available width, preferring a measure
+  /// boundary when one is available and falling back to a beat-level break only
+  /// when a single measure is too dense to fit.
+  public func format(
+    inputs: [LayoutInput],
+    fittingWidth width: Double,
+    measureDuration: Rational? = nil
+  ) -> [HorizontalLayout] {
+    precondition(width > 0)
+    guard !inputs.isEmpty else { return [] }
+
+    let contexts = Dictionary(grouping: inputs, by: \.onset)
+      .sorted { $0.key < $1.key }
+      .map(\.value)
+    let measureBoundaries = measureBoundaryIndices(
+      contexts: contexts,
+      measureDuration: measureDuration
+    )
+    var systems: [[LayoutInput]] = []
+    var start = 0
+
+    while start < contexts.count {
+      var end = start
+      var occupiedWidth = 0.0
+      var lastMeasureBoundary: Int?
+
+      while end < contexts.count {
+        let context = contexts[end]
+        let left = context.map(\.metrics.leftExtent).max() ?? 0
+        let right = context.map { $0.metrics.noteWidth + $0.metrics.rightExtent }.max() ?? 0
+        let nextWidth = occupiedWidth
+          + (end == start ? 0 : horizontalFormatter.options.minimumContextGap)
+          + left + right
+
+        if end > start, nextWidth > width { break }
+        occupiedWidth = nextWidth
+        end += 1
+        if measureBoundaries.contains(end) {
+          lastMeasureBoundary = end
+        }
+      }
+
+      if end < contexts.count,
+        let boundary = lastMeasureBoundary,
+        boundary > start
+      {
+        end = boundary
+      }
+
+      let systemInputs = Array(contexts[start..<end]).flatMap { $0 }
+      systems.append(systemInputs)
+      start = end
+    }
+
+    return systems.map { horizontalFormatter.format(inputs: $0, justifyTo: width) }
+  }
+
   private func splitIndices(
     contexts: [[LayoutInput]],
     systemCount: Int,
@@ -77,5 +137,18 @@ public struct SystemFormatter: Sendable {
       lowerBound = split + 1
     }
     return result
+  }
+
+  private func measureBoundaryIndices(
+    contexts: [[LayoutInput]],
+    measureDuration: Rational?
+  ) -> Set<Int> {
+    guard let measureDuration else { return [] }
+    precondition(measureDuration > .zero)
+    return Set(
+      contexts.indices.dropFirst().filter { index in
+        guard let onset = contexts[index].first?.onset else { return false }
+        return (onset / measureDuration).denominator == 1
+      })
   }
 }
