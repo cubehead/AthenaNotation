@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="Assets/Brand/athena-notation-mark.png" width="168" alt="AthenaNotation 标志">
+  <img src="Assets/Brand/athena-notation-mark-readme.png" width="168" alt="AthenaNotation 标志">
 </p>
 
 <h1 align="center">AthenaNotation</h1>

@@ -5,7 +5,9 @@ This directory contains the public AthenaNotation brand mark.
 ## Files
 
 - `athena-notation-mark.png` — 1254 × 1254 RGBA PNG with a transparent
-  background, suitable for README pages, documentation, and derived app icons.
+  background, retained as the high-resolution source for derived assets.
+- `athena-notation-mark-readme.png` — 336 × 336 RGBA PNG optimized for the
+  168-point logo displayed in the English and Chinese README pages.
 
 The mark combines an abstract Athena helmet with a musical note and a five-line
 staff. Preserve its aspect ratio and leave clear space around it. On light
