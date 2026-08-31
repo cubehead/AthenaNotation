@@ -927,11 +927,16 @@ public struct AndroidScoreRenderer: Sendable {
         return [line(role: "hairpin", x1: start.x, y1: start.y - h, x2: end.x, y2: end.y), line(role: "hairpin", x1: start.x, y1: start.y + h, x2: end.x, y2: end.y)]
       }
       if segment.spanner.kind == .pedal {
-        return [
-          text(role: "pedalLabel", value: "Ped.", x: start.x + 9, y: start.y - 1, size: 14),
-          line(role: "pedalLine", x1: start.x + 24, y1: start.y, x2: end.x, y2: end.y),
-          line(role: "pedalHook", x1: end.x, y1: end.y, x2: end.x, y2: end.y - 8),
-        ]
+        var commands: [AndroidRenderCommand] = []
+        let labelOffset = segment.showsPedalLabel ? 24.0 : 0
+        if segment.showsPedalLabel {
+          commands.append(text(role: "pedalLabel", value: "Ped.", x: start.x + 9, y: start.y - 1, size: 14))
+        }
+        commands.append(line(role: "pedalLine", x1: start.x + labelOffset, y1: start.y, x2: end.x, y2: end.y))
+        if segment.showsPedalReleaseHook {
+          commands.append(line(role: "pedalHook", x1: end.x, y1: end.y, x2: end.x, y2: end.y - 8))
+        }
+        return commands
       }
       let direction = below(segment.spanner) ? 1.0 : -1.0
       let controlY = (start.y + end.y) / 2 + direction * min(18, (end.x - start.x) * 0.12)

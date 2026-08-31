@@ -37,7 +37,6 @@
   <line data-role="hairpin" x1="406" y1="232" x2="918" y2="238" fill="none" stroke="#000000" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
   <text data-role="pedalLabel" x="169" y="247" font-size="14" text-anchor="middle" dominant-baseline="central" fill="#000000" stroke="none">Ped.</text>
   <line data-role="pedalLine" x1="184" y1="248" x2="918" y2="248" fill="none" stroke="#000000" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
-  <line data-role="pedalHook" x1="918" y1="248" x2="918" y2="240" fill="none" stroke="#000000" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
   <line data-role="volta" x1="152" y1="118" x2="924" y2="118" fill="none" stroke="#000000" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
   <line data-role="voltaHook" x1="152" y1="118" x2="152" y2="128" fill="none" stroke="#000000" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
   <text data-role="voltaNumber" x="164" y="126" font-size="12" text-anchor="middle" dominant-baseline="central" fill="#000000" stroke="none">1.</text>
@@ -65,7 +64,6 @@
   <text data-role="notehead" data-event="expression-8" x="890" y="534" font-size="40" text-anchor="middle" dominant-baseline="central" font-family="Bravura" fill="#000000" stroke="none"></text>
   <line data-role="hairpin" x1="140" y1="592" x2="390" y2="586" fill="none" stroke="#000000" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
   <line data-role="hairpin" x1="140" y1="592" x2="390" y2="598" fill="none" stroke="#000000" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
-  <text data-role="pedalLabel" x="149" y="607" font-size="14" text-anchor="middle" dominant-baseline="central" fill="#000000" stroke="none">Ped.</text>
-  <line data-role="pedalLine" x1="164" y1="608" x2="882" y2="608" fill="none" stroke="#000000" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+  <line data-role="pedalLine" x1="140" y1="608" x2="882" y2="608" fill="none" stroke="#000000" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
   <line data-role="pedalHook" x1="882" y1="608" x2="882" y2="600" fill="none" stroke="#000000" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>

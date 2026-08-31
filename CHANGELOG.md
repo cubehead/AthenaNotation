@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Render continuous pedal ranges with a single initial `Ped.` label, carry the
+  line across system breaks, and reserve the release hook for the final segment
+  on Apple and Android.
 - Add an independent playback-cursor visibility policy for Apple, Android, and
   Windows rendering, including matching example controls and Android JNI APIs.
 - Add width-aware automatic system breaks that use engraving collision extents,

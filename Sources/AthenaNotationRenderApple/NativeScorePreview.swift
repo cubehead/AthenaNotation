@@ -1262,12 +1262,14 @@ public struct NativeScorePreview: View {
 
       if segment.spanner.kind == .pedal {
         var pedalLine = Path()
-        let labelOffset = segment.start == .event(segment.spanner.startEventID) ? 24.0 : 0
+        let labelOffset = segment.showsPedalLabel ? 24.0 : 0
         pedalLine.move(to: CGPoint(x: start.x + labelOffset, y: start.y))
         pedalLine.addLine(to: end)
-        pedalLine.addLine(to: CGPoint(x: end.x, y: end.y - 8))
+        if segment.showsPedalReleaseHook {
+          pedalLine.addLine(to: CGPoint(x: end.x, y: end.y - 8))
+        }
         context.stroke(pedalLine, with: .color(resolvedTheme.foreground), lineWidth: 1.1)
-        if labelOffset > 0 {
+        if segment.showsPedalLabel {
           let label = Text("Ped.")
             .font(.system(size: 14, weight: .semibold, design: .serif))
             .italic()

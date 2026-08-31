@@ -496,7 +496,7 @@ AthenaNotationLayout	symbol	swift.init	HorizontalFormatter.init(options:)	init(o
 AthenaNotationLayout	symbol	swift.init	LayoutInput.init(event:voiceID:onset:metrics:)	init(event: NotationEvent, voiceID: String, onset: Rational, metrics: EventLayoutMetrics = .init())
 AthenaNotationLayout	symbol	swift.init	PositionedEvent.init(input:x:)	init(input: LayoutInput, x: Double)
 AthenaNotationLayout	symbol	swift.init	SpannerPlanner.init()	init()
-AthenaNotationLayout	symbol	swift.init	SpannerSystemSegment.init(spanner:systemIndex:start:end:)	init(spanner: NotationSpanner, systemIndex: Int, start: SpannerSystemEndpoint, end: SpannerSystemEndpoint)
+AthenaNotationLayout	symbol	swift.init	SpannerSystemSegment.init(spanner:systemIndex:start:end:showsPedalLabel:showsPedalReleaseHook:)	init(spanner: NotationSpanner, systemIndex: Int, start: SpannerSystemEndpoint, end: SpannerSystemEndpoint, showsPedalLabel: Bool = true, showsPedalReleaseHook: Bool = true)
 AthenaNotationLayout	symbol	swift.init	SystemFormatter.init(horizontalFormatter:)	init(horizontalFormatter: HorizontalFormatter = .init())
 AthenaNotationLayout	symbol	swift.init	TupletPlanner.init()	init()
 AthenaNotationLayout	symbol	swift.init	TupletSystemSegment.init(tuplet:systemIndex:eventIDs:beginsTuplet:endsTuplet:)	init(tuplet: NotationTuplet, systemIndex: Int, eventIDs: [NotationEventID], beginsTuplet: Bool, endsTuplet: Bool)
@@ -541,6 +541,8 @@ AthenaNotationLayout	symbol	swift.property	LayoutInput.voiceID	let voiceID: Stri
 AthenaNotationLayout	symbol	swift.property	PositionedEvent.input	let input: LayoutInput
 AthenaNotationLayout	symbol	swift.property	PositionedEvent.x	let x: Double
 AthenaNotationLayout	symbol	swift.property	SpannerSystemSegment.end	let end: SpannerSystemEndpoint
+AthenaNotationLayout	symbol	swift.property	SpannerSystemSegment.showsPedalLabel	let showsPedalLabel: Bool
+AthenaNotationLayout	symbol	swift.property	SpannerSystemSegment.showsPedalReleaseHook	let showsPedalReleaseHook: Bool
 AthenaNotationLayout	symbol	swift.property	SpannerSystemSegment.spanner	let spanner: NotationSpanner
 AthenaNotationLayout	symbol	swift.property	SpannerSystemSegment.start	let start: SpannerSystemEndpoint
 AthenaNotationLayout	symbol	swift.property	SpannerSystemSegment.systemIndex	let systemIndex: Int

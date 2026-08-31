@@ -13,17 +13,25 @@ public struct SpannerSystemSegment: Hashable, Sendable {
   public let systemIndex: Int
   public let start: SpannerSystemEndpoint
   public let end: SpannerSystemEndpoint
+  /// Whether this segment begins a newly pressed pedal and should show `Ped.`.
+  public let showsPedalLabel: Bool
+  /// Whether this segment contains the actual pedal release and should draw its end hook.
+  public let showsPedalReleaseHook: Bool
 
   public init(
     spanner: NotationSpanner,
     systemIndex: Int,
     start: SpannerSystemEndpoint,
-    end: SpannerSystemEndpoint
+    end: SpannerSystemEndpoint,
+    showsPedalLabel: Bool = true,
+    showsPedalReleaseHook: Bool = true
   ) {
     self.spanner = spanner
     self.systemIndex = systemIndex
     self.start = start
     self.end = end
+    self.showsPedalLabel = showsPedalLabel
+    self.showsPedalReleaseHook = showsPedalReleaseHook
   }
 }
 
@@ -40,6 +48,26 @@ public struct SpannerPlanner: Sendable {
       uniqueKeysWithValues: layouts.enumerated().flatMap { systemIndex, layout in
         layout.events.map { ($0.input.event.id, systemIndex) }
       })
+    let eventByID = Dictionary(
+      uniqueKeysWithValues: layouts.flatMap { layout in
+        layout.events.map { ($0.input.event.id, $0.input) }
+      })
+    let continuingPedalIDs = Set<String>(spanners.compactMap { spanner in
+      guard spanner.kind == .pedal,
+        let startInput = eventByID[spanner.startEventID]
+      else { return nil }
+
+      let continuesPreviousPedal = spanners.contains { previous in
+        guard previous.kind == .pedal,
+          previous.id != spanner.id,
+          let endInput = eventByID[previous.endEventID],
+          endInput.event.staffID == startInput.event.staffID
+        else { return false }
+        return previous.endEventID == spanner.startEventID
+          || endInput.onset + endInput.event.duration == startInput.onset
+      }
+      return continuesPreviousPedal ? spanner.id : nil
+    })
 
     return spanners.flatMap { spanner -> [SpannerSystemSegment] in
       guard let startSystem = systemByEvent[spanner.startEventID],
@@ -53,7 +81,8 @@ public struct SpannerPlanner: Sendable {
             spanner: spanner,
             systemIndex: startSystem,
             start: .event(spanner.startEventID),
-            end: .event(spanner.endEventID)
+            end: .event(spanner.endEventID),
+            showsPedalLabel: spanner.kind != .pedal || !continuingPedalIDs.contains(spanner.id)
           )
         ]
       }
@@ -63,7 +92,10 @@ public struct SpannerPlanner: Sendable {
           spanner: spanner,
           systemIndex: systemIndex,
           start: systemIndex == startSystem ? .event(spanner.startEventID) : .leadingSystemEdge,
-          end: systemIndex == endSystem ? .event(spanner.endEventID) : .trailingSystemEdge
+          end: systemIndex == endSystem ? .event(spanner.endEventID) : .trailingSystemEdge,
+          showsPedalLabel: spanner.kind != .pedal
+            || (systemIndex == startSystem && !continuingPedalIDs.contains(spanner.id)),
+          showsPedalReleaseHook: spanner.kind != .pedal || systemIndex == endSystem
         )
       }
     }
